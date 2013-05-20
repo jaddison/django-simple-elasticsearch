@@ -60,4 +60,4 @@ ES_DEFAULT_INDEX_SETTINGS = getattr(settings, 'ES_DEFAULT_INDEX_SETTINGS', {})
 #         }
 #     }
 # }
-ES_CUSTOM_INDEX_SETTINGS = getattr(settings, 'ES_CUSTOM_INDEX_SETTINGS ', {})
+ES_CUSTOM_INDEX_SETTINGS = getattr(settings, 'ES_CUSTOM_INDEX_SETTINGS', {})

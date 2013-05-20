@@ -118,6 +118,7 @@ class ESBaseIndex(object):
         # to eat up too much memory, so just send if we hit a threshold
         if len(ES_REQUEST_FINISHED_DATA[self]) >= ES_BULK_LIMIT_BEFORE_SEND:
             self.bulk_send(ES_REQUEST_FINISHED_DATA[self])
+            ES_REQUEST_FINISHED_DATA[self] = []
 
     def bulk_prepare(self, obj, operation):
         """ This method is building custom ES bulk-formatted lines so that we can send a

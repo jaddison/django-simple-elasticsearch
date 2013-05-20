@@ -142,12 +142,27 @@ class Command(BaseCommand):
     def update(self, indexes, no_input=False):
         if no_input or 'yes' == raw_input(u'Are you sure you want to update {0} index(es)? [yes/NO]: '.format(u'the ' + u', '.join(indexes) if indexes else '**ALL**')).lower():
             # process everything for creating each index
-            for index in (indexes or self.all_index_names):
-                for index in self.all_indexes[index]:
+            for index_name in (indexes or self.all_index_names):
+                for index in self.all_indexes[index_name]:
+                    self.es.send_request(
+                        'PUT',
+                        [index_name, '_settings'],
+                        self.es._encode_json({'index': {'refresh_interval': '-1', "merge.policy.merge_factor" : 30}}),
+                        encode_body=False
+                    )
+
+                    i = 0
                     qs = index.get_queryset()
                     for i, item in enumerate(queryset_iterator(qs)):
                         index.perform_action(item, 'index')
-                    print "Updated index '{0}', type '{1}' ({2} items).".format(index, index.get_type_name(), i)
+
+                    self.es.send_request(
+                        'PUT',
+                        [index_name, '_settings'],
+                        self.es._encode_json({'index': {'refresh_interval': '1s', "merge.policy.merge_factor" : 10}}),
+                        encode_body=False
+                    )
+                    print "Updated index '{0}', type '{1}' ({2} items).".format(index_name, index.get_type_name(), i+1)
 
     def rebuild(self, indexes=None, no_input=False):
         # TODO: use aliases in here to prevent downtime; create new indexes with unique names,
