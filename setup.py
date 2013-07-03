@@ -12,7 +12,7 @@ setup(
         'simple_elasticsearch.management',
         'simple_elasticsearch.management.commands'
     ],
-    version = '0.1.1',
+    version = '0.1.3',
     url='http://github.com/jaddison/django-simple-elasticsearch',
     keywords=['search', 'django', 'elasticsearch', 'es', 'index'],
     license='BSD',

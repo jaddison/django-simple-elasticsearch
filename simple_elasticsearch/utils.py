@@ -39,7 +39,7 @@ def recursive_dict_update(d, u):
     return d
 
 
-def queryset_generator(queryset, chunksize=1000):
+def queryset_iterator(queryset, chunksize=1000):
     last_pk = queryset.order_by('-pk')[0].pk
     queryset = queryset.order_by('pk')
     pk = queryset[0].pk - 1
