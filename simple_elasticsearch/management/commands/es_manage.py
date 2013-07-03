@@ -62,7 +62,7 @@ class Command(BaseCommand):
             default=False,
         )
     )
-    es = ElasticSearch('http://localhost:9200/')
+    es = ElasticSearch(es_settings.ES_CONNECTION_URL)
 
     def handle(self, *args, **options):
         no_input = options.get('no_input')

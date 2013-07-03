@@ -1,8 +1,10 @@
 import collections
+import gc
 import inspect
 
 from django.conf import settings
 from django.utils.importlib import import_module
+
 from .indexes import ESBaseIndex
 
 
@@ -37,21 +39,32 @@ def recursive_dict_update(d, u):
     return d
 
 
-def queryset_iterator(queryset, chunksize=1000, reverse=False):
-    ordering = '-' if reverse else ''
-    queryset = queryset.order_by(ordering + 'pk')
-    last_pk = None
-    new_items = True
-    while new_items:
-        new_items = False
-        chunk = queryset
-        if last_pk is not None:
-            func = 'lt' if reverse else 'gt'
-            chunk = chunk.filter(**{'pk__' + func: last_pk})
-        chunk = chunk[:chunksize]
-        row = None
-        for row in chunk:
+def queryset_generator(queryset, chunksize=1000):
+    last_pk = queryset.order_by('-pk')[0].pk
+    queryset = queryset.order_by('pk')
+    pk = queryset[0].pk - 1
+    while pk < last_pk:
+        for row in queryset.filter(pk__gt=pk)[:chunksize]:
+            pk = row.pk
             yield row
-        if row is not None:
-            last_pk = row.pk
-            new_items = True
+        gc.collect()
+
+# def queryset_iterator(queryset, chunksize=1000, reverse=False):
+#     ordering = '-' if reverse else ''
+#     queryset = queryset.order_by(ordering + 'pk')
+#     last_pk = None
+#     new_items = True
+#     while new_items:
+#         new_items = False
+#         chunk = queryset
+#         if last_pk is not None:
+#             func = 'lt' if reverse else 'gt'
+#             chunk = chunk.filter(**{'pk__' + func: last_pk})
+#         chunk = chunk[:chunksize]
+#         row = None
+#         for row in chunk:
+#             yield row
+#         if row is not None:
+#             last_pk = row.pk
+#             new_items = True
+
