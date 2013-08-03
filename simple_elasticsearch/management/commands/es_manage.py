@@ -1,7 +1,7 @@
 from optparse import make_option
 
 from django.core.management.base import BaseCommand, CommandError
-from pyelasticsearch import ElasticSearch
+from pyelasticsearch import ElasticSearch, ElasticHttpNotFoundError
 
 from ...utils import queryset_iterator, recursive_dict_update, get_all_indexes
 from ... import settings as es_settings
@@ -107,10 +107,13 @@ class Command(BaseCommand):
     def delete(self, indexes=None, no_input=False):
         if no_input or 'yes' == raw_input(u'Are you sure you want to delete {0} index(es)? [yes/NO]: '.format(u'the ' + u', '.join(indexes) if indexes else '**ALL**')).lower():
             print 'Deleting indexes...',
-            if not indexes:
-                self.es.delete_all_indexes()
-            else:
-                self.es.delete_index(indexes)
+            try:
+                if not indexes:
+                    self.es.delete_all_indexes()
+                else:
+                    self.es.delete_index(indexes)
+            except ElasticHttpNotFoundError:
+                pass
             print 'complete.'
 
     def initialize(self, indexes=None, no_input=False):

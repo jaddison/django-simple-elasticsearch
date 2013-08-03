@@ -4,6 +4,10 @@ import inspect
 
 from django.conf import settings
 from django.utils.importlib import import_module
+try:
+    import celery
+except ImportError:
+    celery = None
 
 from .indexes import ESBaseIndex
 
@@ -49,22 +53,21 @@ def queryset_iterator(queryset, chunksize=1000):
             yield row
         gc.collect()
 
-# def queryset_iterator(queryset, chunksize=1000, reverse=False):
-#     ordering = '-' if reverse else ''
-#     queryset = queryset.order_by(ordering + 'pk')
-#     last_pk = None
-#     new_items = True
-#     while new_items:
-#         new_items = False
-#         chunk = queryset
-#         if last_pk is not None:
-#             func = 'lt' if reverse else 'gt'
-#             chunk = chunk.filter(**{'pk__' + func: last_pk})
-#         chunk = chunk[:chunksize]
-#         row = None
-#         for row in chunk:
-#             yield row
-#         if row is not None:
-#             last_pk = row.pk
-#             new_items = True
 
+if celery:
+    class ESCallbackTask(celery.Task):
+        def _update_es(self):
+            try:
+                from .indexes import process_bulk_data
+            except ImportError:
+                # ES_USE_REQUEST_FINISHED_SIGNAL is not enabled, so nothing to do!
+                return
+
+            # trigger the sending of bulk data to the elasticsearch `bulk` API endpoint
+            process_bulk_data(None)
+
+        def on_success(self, retval, task_id, args, kwargs):
+            self._update_es()
+
+        def on_failure(self, exc, task_id, args, kwargs, einfo):
+            self._update_es()

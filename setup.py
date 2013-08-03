@@ -1,29 +1,41 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
+
+try:
+    import pypandoc
+    description_files = [
+        'README.md',
+        'HISTORY.md',
+        'AUTHORS.md',
+        'CONTRIBUTING.md'
+    ]
+
+    long_description = u''
+    for f in description_files:
+        try:
+            long_description += pypandoc.convert(f, 'rst') + '\n\n'
+        except IOError:
+            pass
+except ImportError:
+   long_description = u'View `django-simple-elasticsearch documentation on Github  <https://github.com/jaddison/django-simple-elasticsearch>`_.'
 
 
 setup(
     name = 'django-simple-elasticsearch',
+    version='0.1.4',
     description = 'Simple Django ElasticSearch indexing integration.',
-    long_description=u'View `django-simple-elasticsearch documentation on Github  <https://github.com/jaddison/django-simple-elasticsearch>`_.',
+    long_description=long_description,
+    url='http://github.com/jaddison/django-simple-elasticsearch',
+    license='BSD',
     author='James Addison',
     author_email='code@scottisheyes.com',
-    packages = [
-        'simple_elasticsearch',
-        'simple_elasticsearch.management',
-        'simple_elasticsearch.management.commands'
-    ],
-    version = '0.1.3',
-    url='http://github.com/jaddison/django-simple-elasticsearch',
-    keywords=['search', 'django', 'elasticsearch', 'es', 'index'],
-    license='BSD',
-    requires=['pyelasticsearch'],
+    packages=find_packages(exclude=['tests*']),
     classifiers=[
-      'Development Status :: 4 - Beta',
+      'Development Status :: 3 - Alpha',
       'License :: OSI Approved :: BSD License',
       'Intended Audience :: Developers',
       'Environment :: Web Environment',
       'Programming Language :: Python',
       'Framework :: Django',
       'Topic :: Internet :: WWW/HTTP :: WSGI',
-    ],
+    ]
 )

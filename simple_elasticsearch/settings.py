@@ -6,7 +6,7 @@ from django.conf import settings
 # and then sends them to the broker/task/ES. This ensures that client response times are affected
 # as little as possible.
 ES_USE_REQUEST_FINISHED_SIGNAL = getattr(settings, 'ES_USE_REQUEST_FINISHED_SIGNAL', False)
-ES_BULK_LIMIT_BEFORE_SEND = getattr(settings, 'ES_BULK_LIMIT_BEFORE_SEND', 100)
+ES_BULK_LIMIT_BEFORE_SEND = getattr(settings, 'ES_BULK_LIMIT_BEFORE_SEND', 500)
 ES_CONNECTION_URL = getattr(settings, 'ES_CONNECTION_URL', 'http://localhost:9200/')
 
 # Override this if you want to have a base set of settings for all your indexes. This dictionary
