@@ -15,7 +15,8 @@ if ES_USE_REQUEST_FINISHED_SIGNAL:
 
         # ask each ES index instance to handle its own 'sending' to ES
         for index, data in ES_REQUEST_FINISHED_DATA.iteritems():
-            index.bulk_send(data)
+            if data:
+                index.bulk_send(data)
 
         # Reset the global data object
         ES_REQUEST_FINISHED_DATA = collections.defaultdict(lambda: [])
