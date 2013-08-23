@@ -16,12 +16,12 @@ try:
         except IOError:
             pass
 except ImportError:
-   long_description = u'View `django-simple-elasticsearch documentation on Github  <https://github.com/jaddison/django-simple-elasticsearch>`_.'
+    long_description = u'View `django-simple-elasticsearch documentation on Github  <https://github.com/jaddison/django-simple-elasticsearch>`_.'
 
 
 setup(
     name = 'django-simple-elasticsearch',
-    version='0.1.4',
+    version='0.1.6',
     description = 'Simple Django ElasticSearch indexing integration.',
     long_description=long_description,
     url='http://github.com/jaddison/django-simple-elasticsearch',
@@ -30,12 +30,12 @@ setup(
     author_email='code@scottisheyes.com',
     packages=find_packages(exclude=['tests*']),
     classifiers=[
-      'Development Status :: 3 - Alpha',
-      'License :: OSI Approved :: BSD License',
-      'Intended Audience :: Developers',
-      'Environment :: Web Environment',
-      'Programming Language :: Python',
-      'Framework :: Django',
-      'Topic :: Internet :: WWW/HTTP :: WSGI',
+        'Development Status :: 3 - Alpha',
+        'License :: OSI Approved :: BSD License',
+        'Intended Audience :: Developers',
+        'Environment :: Web Environment',
+        'Programming Language :: Python',
+        'Framework :: Django',
+        'Topic :: Internet :: WWW/HTTP :: WSGI'
     ]
 )
