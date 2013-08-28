@@ -105,13 +105,10 @@ class Command(BaseCommand):
             print 'complete.'
 
     def delete(self, indexes=None, no_input=False):
-        if no_input or 'yes' == raw_input(u'Are you sure you want to delete {0} index(es)? [yes/NO]: '.format(u'the ' + u', '.join(indexes) if indexes else '**ALL**')).lower():
+        if no_input or 'yes' == raw_input(u'Are you sure you want to delete {0} index(es)? [yes/NO]: '.format(u'the ' + u', '.join(indexes) if indexes else '**ALL simple_elasticsearch managed**')).lower():
             print 'Deleting indexes...',
             try:
-                if not indexes:
-                    self.es.delete_all_indexes()
-                else:
-                    self.es.delete_index(indexes)
+                self.es.delete_index(indexes or self.all_index_names)
             except ElasticHttpNotFoundError:
                 pass
             print 'complete.'
