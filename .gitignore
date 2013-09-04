@@ -1,3 +1,4 @@
+django_simple_elasticsearch.egg-info
 *.pyc
 .Python
 .DS_Store
