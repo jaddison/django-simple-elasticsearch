@@ -1,4 +1,5 @@
 import collections
+import copy
 
 from django.db.models import signals
 from pyelasticsearch import ElasticSearch
@@ -13,13 +14,17 @@ if ES_USE_REQUEST_FINISHED_SIGNAL:
     def process_bulk_data(sender, **kwargs):
         global ES_REQUEST_FINISHED_DATA
 
+        # inefficient, but should prevent "RuntimeError: dictionary changed size during iteration" errors
+        # due to gevent usage in celery task pool
+        tmp = copy.deepcopy(ES_REQUEST_FINISHED_DATA)
+        # Reset the global data object
+        ES_REQUEST_FINISHED_DATA = collections.defaultdict(lambda: [])
+
         # ask each ES index instance to handle its own 'sending' to ES
-        for index, data in ES_REQUEST_FINISHED_DATA.iteritems():
+        for index, data in tmp:
             if data:
                 index.bulk_send(data)
 
-        # Reset the global data object
-        ES_REQUEST_FINISHED_DATA = collections.defaultdict(lambda: [])
 
     request_finished.connect(process_bulk_data, dispatch_uid=u'ES_USE_REQUEST_FINISHED_SIGNAL')
 
