@@ -14,17 +14,14 @@ if ES_USE_REQUEST_FINISHED_SIGNAL:
     def process_bulk_data(sender, **kwargs):
         global ES_REQUEST_FINISHED_DATA
 
-        # inefficient, but should prevent "RuntimeError: dictionary changed size during iteration" errors
-        # due to gevent usage in celery task pool
-        tmp = copy.deepcopy(ES_REQUEST_FINISHED_DATA)
-        # Reset the global data object
-        ES_REQUEST_FINISHED_DATA = collections.defaultdict(lambda: [])
-
         # ask each ES index instance to handle its own 'sending' to ES
-        for index, data in tmp:
-            if data:
-                index.bulk_send(data)
-
+        for index, data in ES_REQUEST_FINISHED_DATA.iteritems():
+            # inefficient, but should prevent "RuntimeError: dictionary changed size during iteration" errors
+            # due to gevent usage in celery task pool
+            tmp = copy.deepcopy(data)
+            ES_REQUEST_FINISHED_DATA[index] = []
+            if tmp:
+                index.bulk_send(tmp)
 
     request_finished.connect(process_bulk_data, dispatch_uid=u'ES_USE_REQUEST_FINISHED_SIGNAL')
 
@@ -95,8 +92,9 @@ class ESBaseIndex(object):
         # ensure we don't build up too big of a queue of data - we don't want
         # to eat up too much memory, so just send if we hit a threshold
         if len(ES_REQUEST_FINISHED_DATA[self]) >= ES_BULK_LIMIT_BEFORE_SEND:
-            self.bulk_send(ES_REQUEST_FINISHED_DATA[self])
+            tmp = copy.deepcopy(ES_REQUEST_FINISHED_DATA[self])
             ES_REQUEST_FINISHED_DATA[self] = []
+            self.bulk_send(tmp)
 
     def bulk_prepare(self, obj, operation):
         """ This method is building custom ES bulk-formatted lines so that we can send a
