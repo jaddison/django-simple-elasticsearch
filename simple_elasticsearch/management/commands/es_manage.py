@@ -16,33 +16,9 @@ class Command(BaseCommand):
     help = ''
     option_list = BaseCommand.option_list + (
         make_option(
-            '--indexes',
-            action='store',
-            dest='indexes',
-            default='',
-        ),
-        make_option(
             '--list',
             action='store_true',
             dest='list',
-            default=False,
-        ),
-        make_option(
-            '--no_input',
-            action='store_true',
-            dest='no_input',
-            default=False,
-        ),
-        make_option(
-            '--refresh',
-            action='store_true',
-            dest='refresh',
-            default=False,
-        ),
-        make_option(
-            '--delete',
-            action='store_true',
-            dest='delete',
             default=False,
         ),
         make_option(
@@ -52,16 +28,28 @@ class Command(BaseCommand):
             default=False,
         ),
         make_option(
+            '--delete',
+            action='store_true',
+            dest='delete',
+            default=False,
+        ),
+        make_option(
             '--rebuild',
             action='store_true',
             dest='rebuild',
             default=False,
         ),
         make_option(
-            '--update',
+            '--no_input',
             action='store_true',
-            dest='update',
+            dest='no_input',
             default=False,
+        ),
+        make_option(
+            '--indexes',
+            action='store',
+            dest='indexes',
+            default='',
         )
     )
     es = ElasticSearch(es_settings.ES_CONNECTION_URL)
