@@ -72,22 +72,22 @@ class ESBaseIndex(object):
     def handle_delete(self, sender, instance, **kwargs):
         self.perform_action(instance, 'delete')
 
-    def perform_action(self, obj, operation, bulk=ES_USE_REQUEST_FINISHED_SIGNAL):
+    def perform_action(self, obj, operation, bulk=ES_USE_REQUEST_FINISHED_SIGNAL, index_name=None):
         if obj and self.get_object_id(obj):
             if operation == 'index' and self.should_index(obj):
                 if bulk:
-                    self.bulk_queue(obj, operation)
+                    self.bulk_queue(obj, operation, index_name)
                 else:
-                    self.index_object(obj)
+                    self.index_object(obj, index_name)
             elif operation == 'delete':
                 if bulk:
-                    self.bulk_queue(obj, operation)
+                    self.bulk_queue(obj, operation, index_name)
                 else:
-                    self.delete_object(obj)
+                    self.delete_object(obj, index_name)
 
-    def bulk_queue(self, obj, operation):
+    def bulk_queue(self, obj, operation, index_name=None):
         global ES_REQUEST_FINISHED_DATA
-        ES_REQUEST_FINISHED_DATA[self].append(self.bulk_prepare(obj, operation))
+        ES_REQUEST_FINISHED_DATA[self].append(self.bulk_prepare(obj, operation, index_name))
 
         # ensure we don't build up too big of a queue of data - we don't want
         # to eat up too much memory, so just send if we hit a threshold
@@ -96,13 +96,13 @@ class ESBaseIndex(object):
             ES_REQUEST_FINISHED_DATA[self] = []
             self.bulk_send(tmp)
 
-    def bulk_prepare(self, obj, operation):
+    def bulk_prepare(self, obj, operation, index_name=None):
         """ This method is building custom ES bulk-formatted lines so that we can send a
         custom request through pyelasticsearch as its bulk_index() implementation has parameter
         limitations. This simply JSON-dumps the appropriate structures to a string.
         """
         data = {
-            '_index': self._index_name,
+            '_index': index_name or self._index_name,
             '_type': self._type_name,
             "_id": self.get_object_id(obj)
         }
@@ -129,18 +129,18 @@ class ESBaseIndex(object):
             query_params=self.get_bulk_operation_params()
         )
 
-    def index_object(self, obj):
+    def index_object(self, obj, index_name=None):
         self.es.index(
-            self._index_name,
+            index_name or self._index_name,
             self._type_name,
             self.get_object_data(obj),
             id=self.get_object_id(obj),
             **self.get_object_params(obj)
         )
 
-    def delete_object(self, obj):
+    def delete_object(self, obj, index_name=None):
         self.es.delete(
-            self._index_name,
+            index_name or self._index_name,
             self._type_name,
             id=self.get_object_id(obj),
             **self.get_object_params(obj)
