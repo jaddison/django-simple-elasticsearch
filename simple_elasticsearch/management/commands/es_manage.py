@@ -116,7 +116,13 @@ class Command(BaseCommand):
             index_settings['mappings'] = type_mappings
 
         index_name = u"{0}-{1}".format(index_alias, datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+
         self.es.create_index(index_name, index_settings)
+
+        # make sure the cluster has allocated at least all the primary
+        # shards (ie. yellow status has been achieved) before continuing
+        self.es.health(wait_for_status='yellow')
+
         return index_name
 
     def subcommand_list(self):
@@ -153,29 +159,31 @@ class Command(BaseCommand):
                 # create a new timestamp-named index
                 index_name = self.create_index(index_alias)
 
+                self.es.send_request(
+                    'PUT',
+                    [index_name, '_settings'],
+                    self.es._encode_json({'index': {'refresh_interval': '-1', "merge.policy.merge_factor": 30}}),
+                    encode_body=False
+                )
+
                 print "Starting rebuild of '{0}' (aliased to real index '{1}'):".format(index_alias, index_name)
                 for index_type in self.all_indexes[index_alias]:
                     print " - processing type '{0}'... ".format(index_type.get_type_name()),
                     sys.stdout.flush()
-                    self.es.send_request(
-                        'PUT',
-                        [index_name, '_settings'],
-                        self.es._encode_json({'index': {'refresh_interval': '-1', "merge.policy.merge_factor": 30}}),
-                        encode_body=False
-                    )
 
                     i = 0
                     qs = index_type.get_queryset()
                     for i, item in enumerate(queryset_iterator(qs)):
                         index_type.perform_action(item, 'index', index_name=index_name)
 
-                    self.es.send_request(
-                        'PUT',
-                        [index_name, '_settings'],
-                        self.es._encode_json({'index': {'refresh_interval': '1s', "merge.policy.merge_factor": 10}}),
-                        encode_body=False
-                    )
                     print "complete. ({0} items)".format(i+1)
+
+                self.es.send_request(
+                    'PUT',
+                    [index_name, '_settings'],
+                    self.es._encode_json({'index': {'refresh_interval': '1s', "merge.policy.merge_factor": 10}}),
+                    encode_body=False
+                )
 
                 # tell ES to 'flip the switch' to merge segments and make the data available for searching
                 self.es.refresh(index_name)

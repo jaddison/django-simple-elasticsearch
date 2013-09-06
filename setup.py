@@ -21,7 +21,7 @@ except ImportError:
 
 setup(
     name = 'django-simple-elasticsearch',
-    version='0.2.0',
+    version='0.2.1',
     description = 'Simple Django ElasticSearch indexing integration.',
     long_description=long_description,
     url='http://github.com/jaddison/django-simple-elasticsearch',
