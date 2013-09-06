@@ -30,7 +30,7 @@ setup(
     author_email='code@scottisheyes.com',
     packages=find_packages(exclude=['tests*']),
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'License :: OSI Approved :: BSD License',
         'Intended Audience :: Developers',
         'Environment :: Web Environment',
