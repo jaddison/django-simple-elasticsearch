@@ -18,10 +18,13 @@ class ESPaginator(Paginator):
         super(ESPaginator, self).__init__(*args, **kwargs)
         self._count = count
 
-    def page(self, number):
+    def page(self, number, just_source=True):
         "Returns a Page object for the given 1-based page number."
         number = self.validate_number(number)
-        return ESPage(self.object_list, number, self)
+        if just_source:
+            # the ESPage class below extracts just the `_source` data from the hit data.
+            return ESPage(self.object_list, number, self)
+        return Page(self.object_list, number, self)
 
 
 class ESPage(Page):
