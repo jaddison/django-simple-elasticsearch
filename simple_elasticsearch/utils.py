@@ -5,7 +5,7 @@ import inspect
 from django.conf import settings
 from django.http import Http404
 from django.utils.importlib import import_module
-from pyelasticsearch import ElasticSearch, ElasticHttpNotFoundError
+from elasticsearch import Elasticsearch, ElasticsearchException
 
 try:
     import celery
@@ -77,10 +77,10 @@ if celery:
 
 
 def get_from_es_or_None(index, type, id, **kwargs):
-    es = kwargs.pop('es', ElasticSearch(settings.ES_CONNECTION_URL))
+    es = kwargs.pop('es', Elasticsearch(settings.ES_CONNECTION_URL))
     try:
-        return es.get(index, type, id, **kwargs)
-    except ElasticHttpNotFoundError:
+        return es.get(index, id, type, **kwargs)
+    except ElasticsearchException:
         return None
 
 

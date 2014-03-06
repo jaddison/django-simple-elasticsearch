@@ -42,7 +42,7 @@ ES_CONNECTION_URL = getattr(settings, 'ES_CONNECTION_URL', 'http://localhost:920
 # }
 ES_DEFAULT_INDEX_SETTINGS = getattr(settings, 'ES_DEFAULT_INDEX_SETTINGS', {})
 
-# Override this in your project settings to define any ElasticSearch-specific index settings.
+# Override this in your project settings to define any Elasticsearch-specific index settings.
 # Eg.
 # ES_CUSTOM_INDEX_SETTINGS = {
 #     "twitter": {

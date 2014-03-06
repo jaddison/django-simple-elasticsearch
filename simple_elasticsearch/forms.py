@@ -3,13 +3,13 @@ from django.conf import settings
 from django.core.paginator import Paginator, Page, EmptyPage
 from django.http import Http404
 from django.utils import six
-from pyelasticsearch import ElasticSearch
+from elasticsearch import Elasticsearch
 
 
 class ESPaginator(Paginator):
     """
     Override Django's built-in Paginator class to take in a count/total number of items;
-    ElasticSearch provides the total as a part of the query results, so we can minimize hits.
+    Elasticsearch provides the total as a part of the query results, so we can minimize hits.
 
     Also change `page()` method to use custom ESPage class (see below).
     """
@@ -96,14 +96,14 @@ class ESSearchResponse(object):
     def total(self):
         return self.hit_stats.get('total', 0)
 
-    def results(self, paginate=True):
+    def results(self, paginate=True, just_source=True):
         if paginate:
             paginator = ESPaginator(
                 self.hit_data,
                 self.page_size,
                 count=self.total()
             )
-            return paginator.page(self.page)
+            return paginator.page(self.page, just_source)
 
         return self.hit_data
 
@@ -113,10 +113,10 @@ class ESSearchProcessor(object):
         if type(forms) not in (list, tuple):
             forms = [forms,]
         self.forms = forms
-        self.es = es or ElasticSearch(settings.ES_CONNECTION_URL)
+        self.es = es or Elasticsearch(settings.ES_CONNECTION_URL)
 
     def search(self):
-        msearch_data = u''
+        bulk_search_data = []
         for form in self.forms:
             data = {'index': form.get_index(), 'type': form.get_type()}
             if 'routing' in form.query_params:
@@ -128,17 +128,12 @@ class ESSearchProcessor(object):
             query['from'] = (form.page - 1) * form.page_size
             query['size'] = form.page_size
 
-            msearch_data += self.es._encode_json(data) + '\n'
-            msearch_data += self.es._encode_json(query) + '\n'
+            bulk_search_data.append(data)
+            bulk_search_data.append(query)
 
-        if msearch_data:
-            data = self.es.send_request(
-                'POST',
-                ['_msearch'],
-                msearch_data,
-                encode_body=False
-            )
+        if bulk_search_data:
             responses = []
+            data = self.es.msearch(bulk_search_data)
             if data:
                 for i, tmp in enumerate(data.get('responses', [])):
                     responses.append(self.forms[i].process_response(tmp))

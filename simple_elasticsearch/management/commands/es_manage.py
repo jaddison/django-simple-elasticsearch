@@ -3,7 +3,7 @@ import sys
 from optparse import make_option
 
 from django.core.management.base import BaseCommand, CommandError
-from pyelasticsearch import ElasticSearch, ElasticHttpNotFoundError
+from elasticsearch import Elasticsearch, ElasticsearchException
 
 from ...utils import queryset_iterator, recursive_dict_update, get_all_indexes
 from ... import settings as es_settings
@@ -52,7 +52,7 @@ class Command(BaseCommand):
             default='',
         )
     )
-    es = ElasticSearch(es_settings.ES_CONNECTION_URL)
+    es = Elasticsearch(es_settings.ES_CONNECTION_URL)
 
     def handle(self, *args, **options):
         no_input = options.get('no_input')
@@ -80,8 +80,8 @@ class Command(BaseCommand):
     def get_existing_aliases(self, indexes=None):
         existing_aliases = {}
         try:
-            tmp = self.es.aliases(index=indexes, es_ignore_indices='missing')
-        except ElasticHttpNotFoundError:
+            tmp = self.es.indices.get_alias(index=indexes, ignore_indices='missing')
+        except ElasticsearchException:
             return existing_aliases
 
         for k,v in tmp.iteritems():
@@ -93,7 +93,7 @@ class Command(BaseCommand):
         old_aliases = self.get_existing_aliases(new_aliases.keys())
         updates = [{"remove": {"index": index, 'alias': alias}} for index, aliases in old_aliases.iteritems() for alias in aliases]
         updates += [{"add": {"index": index, 'alias': alias}} for alias, index in new_aliases.iteritems()]
-        self.es.update_aliases({
+        self.es.indices.update_aliases({
             'actions': updates
         })
 
@@ -117,11 +117,11 @@ class Command(BaseCommand):
 
         index_name = u"{0}-{1}".format(index_alias, datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
 
-        self.es.create_index(index_name, index_settings)
+        self.es.indices.create(index_name, index_settings)
 
         # make sure the cluster has allocated at least all the primary
         # shards (ie. yellow status has been achieved) before continuing
-        self.es.health(wait_for_status='yellow')
+        self.es.cluster.health(wait_for_status='yellow')
 
         return index_name
 
@@ -144,10 +144,11 @@ class Command(BaseCommand):
 
     def subcommand_delete(self, indexes=None, no_input=False):
         if no_input or 'yes' == raw_input(u'Are you sure you want to delete {0} index(es)? [yes/NO]: '.format(u'the ' + u', '.join(indexes) if indexes else '**ALL simple_elasticsearch managed**')).lower():
+            old_aliases = self.get_existing_aliases(indexes or self.all_index_names)
             try:
-                self.es.delete_index(indexes or self.all_index_names)
-            except ElasticHttpNotFoundError:
-                pass
+                self.es.indices.delete(','.join(old_aliases.keys()))
+            except ElasticsearchException, e:
+                print unicode(e)
             print 'Deleting indexes... complete.'
 
     def subcommand_rebuild(self, indexes, no_input=False):
@@ -159,12 +160,7 @@ class Command(BaseCommand):
                 # create a new timestamp-named index
                 index_name = self.create_index(index_alias)
 
-                self.es.send_request(
-                    'PUT',
-                    [index_name, '_settings'],
-                    self.es._encode_json({'index': {'refresh_interval': '-1', "merge.policy.merge_factor": 30}}),
-                    encode_body=False
-                )
+                self.es.indices.put_settings({'index': {'refresh_interval': '-1', "merge.policy.merge_factor": 30}}, index_name)
 
                 print "Starting rebuild of '{0}' (aliased to real index '{1}'):".format(index_alias, index_name)
                 for index_type in self.all_indexes[index_alias]:
@@ -178,20 +174,15 @@ class Command(BaseCommand):
 
                     print "complete. ({0} items)".format(i+1)
 
-                self.es.send_request(
-                    'PUT',
-                    [index_name, '_settings'],
-                    self.es._encode_json({'index': {'refresh_interval': '1s', "merge.policy.merge_factor": 10}}),
-                    encode_body=False
-                )
+                self.es.indices.put_settings({'index': {'refresh_interval': '1s', "merge.policy.merge_factor": 10}}, index_name)
 
                 # tell ES to 'flip the switch' to merge segments and make the data available for searching
-                self.es.refresh(index_name)
+                self.es.indices.refresh(index_name)
 
                 # remove the old aliases for this index and add the new one; an atomic operation that prevents people from seeing downtime
                 self.update_aliases({index_alias:index_name})
                 print " - refresh and aliasing updates complete."
 
             if old_aliases.keys() and raw_input("Delete old unaliased indexes ({0})? (y/n): ".format(u', '.join(old_aliases.keys()))).lower() == 'y':
-                self.es.delete_index(old_aliases.keys())
+                self.es.indices.delete(','.join(old_aliases.keys()))
                 print 'Deleted old aliased indexes: ', u', '.join(old_aliases.keys())

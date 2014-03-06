@@ -2,7 +2,7 @@ import collections
 import copy
 
 from django.db.models import signals
-from pyelasticsearch import ElasticSearch
+from elasticsearch import Elasticsearch
 
 from .settings import ES_USE_REQUEST_FINISHED_SIGNAL, ES_BULK_LIMIT_BEFORE_SEND, ES_CONNECTION_URL
 
@@ -35,13 +35,13 @@ class ESBaseIndex(object):
         self._index_name = self.get_index_name()
         self._type_name = self.get_type_name()
 
-        # Did we get an ElasticSearch object passed in? If so, use it
+        # Did we get an Elasticsearch object passed in? If so, use it
         self._es = kwargs.get('es', None)
 
     @property
     def es(self):
         if not self._es:
-            self._es = ElasticSearch(ES_CONNECTION_URL)
+            self._es = Elasticsearch(ES_CONNECTION_URL)
         return self._es
 
     def register_signals(self):
@@ -87,20 +87,20 @@ class ESBaseIndex(object):
 
     def bulk_queue(self, obj, operation, index_name=None):
         global ES_REQUEST_FINISHED_DATA
-        ES_REQUEST_FINISHED_DATA[self].append(self.bulk_prepare(obj, operation, index_name))
+
+        line1, line2 = self.bulk_prepare(obj, operation, index_name)
+        ES_REQUEST_FINISHED_DATA[self].append(line1)
+        if line2:
+            ES_REQUEST_FINISHED_DATA[self].append(line2)
 
         # ensure we don't build up too big of a queue of data - we don't want
         # to eat up too much memory, so just send if we hit a threshold
-        if len(ES_REQUEST_FINISHED_DATA[self]) >= ES_BULK_LIMIT_BEFORE_SEND:
+        if len(ES_REQUEST_FINISHED_DATA[self]) >= ES_BULK_LIMIT_BEFORE_SEND * 2:
             tmp = copy.deepcopy(ES_REQUEST_FINISHED_DATA[self])
             ES_REQUEST_FINISHED_DATA[self] = []
             self.bulk_send(tmp)
 
     def bulk_prepare(self, obj, operation, index_name=None):
-        """ This method is building custom ES bulk-formatted lines so that we can send a
-        custom request through pyelasticsearch as its bulk_index() implementation has parameter
-        limitations. This simply JSON-dumps the appropriate structures to a string.
-        """
         data = {
             '_index': index_name or self._index_name,
             '_type': self._type_name,
@@ -109,25 +109,17 @@ class ESBaseIndex(object):
         data.update(self.get_object_params(obj))
 
         # bulk operation instruction line
-        op = self.es._encode_json({operation: data}) + '\n'
+        line1 = {operation: data}
 
         # bulk operation data line
+        line2 = None
         if operation.lower() != 'delete':
-            op += self.es._encode_json(self.get_object_data(obj)) + '\n'
+            line2 = self.get_object_data(obj)
 
-        return op
+        return line1, line2
 
     def bulk_send(self, data):
-        # We use a custom bulk operation request due to limitations of the current
-        # design of pyelasticsearch's implementation; for more details, see the
-        # queue_data() method comments
-        self.es.send_request(
-            'POST',
-            ['_bulk'],
-            ''.join(data),
-            encode_body=False,
-            query_params=self.get_bulk_operation_params()
-        )
+        self.es.bulk(data, params=self.get_bulk_operation_params())
 
     def index_object(self, obj, index_name=None):
         self.es.index(
