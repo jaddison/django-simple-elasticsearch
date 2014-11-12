@@ -21,7 +21,7 @@ test_requirements = [
 
 setup(
     name='django-simple-elasticsearch',
-    version='0.9.1',
+    version='0.9.2',
     description='Simple ElasticSearch indexing integration for Django.',
     long_description=readme + '\n\n' + history,
     author='James Addison',
