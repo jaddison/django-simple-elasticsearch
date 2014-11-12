@@ -1,6 +1,5 @@
-from .utils import get_all_indexes
+# -*- coding: utf-8 -*-
 
-# set up all model post_save signals appropriately
-for es_index_name, indexes in get_all_indexes().iteritems():
-    for index in indexes:
-        index.register_signals()
+__author__ = 'James Addison'
+__email__ = 'code@scottisheyes.com'
+__version__ = '0.9.1'

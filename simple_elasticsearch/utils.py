@@ -1,39 +1,144 @@
 import collections
+import datetime
 import gc
-import inspect
+import sys
 
 from django.conf import settings
 from django.http import Http404
 from django.utils.importlib import import_module
 from elasticsearch import Elasticsearch, ElasticsearchException
 
+from . import settings as es_settings
+
 try:
     import celery
 except ImportError:
     celery = None
 
-from .indexes import ESBaseIndex
+from . import settings as es_settings
 
 
-all_indexes = None
+_elasticsearch_indices = collections.defaultdict(lambda: [])
+def get_indices(indices=[]):
+    if not _elasticsearch_indices:
+        type_classes = getattr(settings, 'ELASTICSEARCH_TYPE_CLASSES', ())
+        if not type_classes:
+            raise Exception(u'Missing `ELASTICSEARCH_TYPE_CLASSES` in project `settings`.')
 
-
-def get_all_indexes(es=None):
-    global all_indexes
-    if not all_indexes:
-        all_indexes = collections.defaultdict(lambda: [])
-        for app in settings.INSTALLED_APPS:
+        for type_class in type_classes:
+            package_name, klass_name = type_class.rsplit('.', 1)
             try:
-                index_module = import_module('.es', app)
+                package = import_module(package_name)
+                klass = getattr(package, klass_name)
             except ImportError:
+                sys.stderr.write(u'Unable to import `{}`.\n'.format(type_class))
                 continue
+            _elasticsearch_indices[klass.get_index_name()].append(klass)
 
-            for name, item in inspect.getmembers(index_module):
-                if inspect.isclass(item) and issubclass(item, ESBaseIndex) and item is not ESBaseIndex:
-                    obj = item(es=es)
-                    all_indexes[obj.get_index_name()].append(obj)
+    if not indices:
+        return _elasticsearch_indices
+    else:
+        result = {}
+        for k, v in _elasticsearch_indices.iteritems():
+            if k in indices:
+                result[k] = v
+        return result
 
-    return all_indexes
+
+def create_aliases(es=None, indices=[]):
+    es = es or Elasticsearch(**es_settings.ELASTICSEARCH_CONNECTION_PARAMS)
+
+    current_aliases = es.indices.get_aliases()
+    aliases_for_removal = collections.defaultdict(lambda: [])
+    for item, tmp in current_aliases.iteritems():
+        for iname in tmp.get('aliases', {}).keys():
+            aliases_for_removal[iname].append(item)
+
+    actions = []
+    for index_alias, index_name in indices:
+        for item in aliases_for_removal[index_alias]:
+            actions.append({
+                'remove': {
+                    'index': item,
+                    'alias': index_alias
+                }
+            })
+        actions.append({
+            'add': {
+                'index': index_name,
+                'alias': index_alias
+            }
+        })
+
+    es.indices.update_aliases({'actions': actions})
+
+
+def create_indices(es=None, indices=[], set_aliases=True):
+    es = es or Elasticsearch(**es_settings.ELASTICSEARCH_CONNECTION_PARAMS)
+
+    result = []
+
+    aliases = []
+    now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    for index_alias, type_classes in get_indices(indices).iteritems():
+        index_settings = es_settings.ELASTICSEARCH_DEFAULT_INDEX_SETTINGS
+        index_settings = recursive_dict_update(
+            index_settings,
+            es_settings.ELASTICSEARCH_CUSTOM_INDEX_SETTINGS.get(index_alias, {})
+        )
+
+        index_name = u"{0}-{1}".format(index_alias, now)
+
+        aliases.append((index_alias, index_name))
+
+        type_mappings = {}
+        for type_class in type_classes:
+            tmp = type_class.get_type_mapping()
+            if tmp:
+                type_mappings[type_class.get_type_name()] = tmp
+
+            result.append((
+                type_class,
+                index_alias,
+                index_name
+            ))
+
+        # if we got any type mappings, put them in the index settings
+        if type_mappings:
+            index_settings['mappings'] = type_mappings
+
+        es.indices.create(index_name, index_settings)
+
+    if set_aliases:
+        create_aliases(es, aliases)
+
+    return result, aliases
+
+
+def rebuild_indices(es=None, indices=[], set_aliases=True):
+    es = es or Elasticsearch(**es_settings.ELASTICSEARCH_CONNECTION_PARAMS)
+
+    created_indices, aliases = create_indices(es, indices, False)
+
+    # kludge to avoid OOM due to Django's query logging
+    # db_logger = logging.getLogger('django.db.backends')
+    # oldlevel = db_logger.level
+    # db_logger.setLevel(logging.ERROR)
+
+    for type_class, index_alias, index_name in created_indices:
+        try:
+            type_class.bulk_index(es, index_name)
+        except NotImplementedError:
+            sys.stderr.write(u'`bulk_index` not implemented on `{}`.\n'.format(type_class.get_index_name()))
+            continue
+
+    # return to the norm for db query logging
+    # db_logger.setLevel(oldlevel)
+
+    if set_aliases:
+        create_aliases(es, aliases)
+
+    return created_indices, aliases
 
 
 def recursive_dict_update(d, u):
@@ -47,7 +152,11 @@ def recursive_dict_update(d, u):
 
 
 def queryset_iterator(queryset, chunksize=1000):
-    last_pk = queryset.order_by('-pk')[0].pk
+    try:
+        last_pk = queryset.order_by('-pk')[0].pk
+    except IndexError:
+        return
+
     queryset = queryset.order_by('pk')
     pk = queryset[0].pk - 1
     while pk < last_pk:
@@ -57,27 +166,8 @@ def queryset_iterator(queryset, chunksize=1000):
         gc.collect()
 
 
-if celery:
-    class ESCallbackTask(celery.Task):
-        def _update_es(self):
-            try:
-                from .indexes import process_bulk_data
-            except ImportError:
-                # ES_USE_REQUEST_FINISHED_SIGNAL is not enabled, so nothing to do!
-                return
-
-            # trigger the sending of bulk data to the elasticsearch `bulk` API endpoint
-            process_bulk_data(None)
-
-        def on_success(self, retval, task_id, args, kwargs):
-            self._update_es()
-
-        def on_failure(self, exc, task_id, args, kwargs, einfo):
-            self._update_es()
-
-
 def get_from_es_or_None(index, type, id, **kwargs):
-    es = kwargs.pop('es', Elasticsearch(settings.ES_CONNECTION_URL))
+    es = kwargs.pop('es', Elasticsearch(es_settings.ELASTICSEARCH_SERVER))
     try:
         return es.get(index, id, type, **kwargs)
     except ElasticsearchException:

@@ -1,19 +1,14 @@
 from django.conf import settings
 
 
-# Using this causes the ESDirectMixin and ESRabbitMQMixin to temporarily store ES bulk-formatted
-# index/delete requests from save/delete signal calls until the request has been sent to the client
-# and then sends them to the broker/task/ES. This ensures that client response times are affected
-# as little as possible.
-ES_USE_REQUEST_FINISHED_SIGNAL = getattr(settings, 'ES_USE_REQUEST_FINISHED_SIGNAL', False)
-ES_BULK_LIMIT_BEFORE_SEND = getattr(settings, 'ES_BULK_LIMIT_BEFORE_SEND', 500)
-ES_CONNECTION_URL = getattr(settings, 'ES_CONNECTION_URL', 'http://localhost:9200/')
+ELASTICSEARCH_SERVER = getattr(settings, 'ELASTICSEARCH_SERVER', ['127.0.0.1:9200', ])
+ELASTICSEARCH_CONNECTION_PARAMS = getattr(settings, 'ELASTICSEARCH_CONNECTION_PARAMS', {'hosts': ELASTICSEARCH_SERVER})
 
 # Override this if you want to have a base set of settings for all your indexes. This dictionary
-# gets cloned and then updated with custom index-specific from your ES_CUSTOM_INDEX_SETTINGS
+# gets cloned and then updated with custom index-specific from your ELASTICSEARCH_CUSTOM_INDEX_SETTINGS
 # Eg. to ensure that all of your indexes have 1 shard and have an edgengram tokenizer/analyzer
 # configured
-# ES_DEFAULT_INDEX_SETTINGS = {
+# ELASTICSEARCH_DEFAULT_INDEX_SETTINGS = {
 #     "settings" : {
 #         "index" : {
 #             "number_of_replicas" : 1
@@ -40,11 +35,11 @@ ES_CONNECTION_URL = getattr(settings, 'ES_CONNECTION_URL', 'http://localhost:920
 #         }
 #     }
 # }
-ES_DEFAULT_INDEX_SETTINGS = getattr(settings, 'ES_DEFAULT_INDEX_SETTINGS', {})
+ELASTICSEARCH_DEFAULT_INDEX_SETTINGS = getattr(settings, 'ELASTICSEARCH_DEFAULT_INDEX_SETTINGS', {})
 
 # Override this in your project settings to define any Elasticsearch-specific index settings.
 # Eg.
-# ES_CUSTOM_INDEX_SETTINGS = {
+# ELASTICSEARCH_CUSTOM_INDEX_SETTINGS = {
 #     "twitter": {
 #         "settings" : {
 #             "index" : {
@@ -61,4 +56,4 @@ ES_DEFAULT_INDEX_SETTINGS = getattr(settings, 'ES_DEFAULT_INDEX_SETTINGS', {})
 #         }
 #     }
 # }
-ES_CUSTOM_INDEX_SETTINGS = getattr(settings, 'ES_CUSTOM_INDEX_SETTINGS', {})
+ELASTICSEARCH_CUSTOM_INDEX_SETTINGS = getattr(settings, 'ELASTICSEARCH_CUSTOM_INDEX_SETTINGS', {})

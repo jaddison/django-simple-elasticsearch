@@ -1,1 +1,0 @@
-Contributions are welcome - simply fork on Github, fix/improve and submit a pull request.

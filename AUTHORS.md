@@ -1,5 +1,0 @@
-Authors:
-----------------
-
-    * James Addison
-

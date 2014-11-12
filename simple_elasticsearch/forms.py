@@ -1,10 +1,11 @@
 from django import forms
 from django.conf import settings
-from django.core.paginator import Paginator, Page, EmptyPage
-from django.http import Http404
+from django.core.paginator import Paginator, Page
 from django.utils import six
+
 from elasticsearch import Elasticsearch
 
+from . import settings as es_settings
 
 class ESPaginator(Paginator):
     """
@@ -113,7 +114,7 @@ class ESSearchProcessor(object):
         if type(forms) not in (list, tuple):
             forms = [forms,]
         self.forms = forms
-        self.es = es or Elasticsearch(settings.ES_CONNECTION_URL)
+        self.es = es or Elasticsearch(es_settings.ELASTICSEARCH_SERVER)
 
     def search(self):
         bulk_search_data = []
