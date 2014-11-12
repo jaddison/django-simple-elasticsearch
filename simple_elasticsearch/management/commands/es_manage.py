@@ -74,7 +74,7 @@ class Command(BaseCommand):
 
         if input == 'y':
             sys.stdout.write(u"Creating ES indexes: ")
-            results, aliases = create_indices(indexes)
+            results, aliases = create_indices(indices=indexes)
             sys.stdout.write(u"complete.\n")
             for alias, index in aliases:
                 print u"'{0}' aliased to '{1}'".format(alias, index)
@@ -88,7 +88,7 @@ class Command(BaseCommand):
 
         if input == 'y':
             sys.stdout.write(u"Rebuilding ES indexes: ")
-            results, aliases = rebuild_indices(indexes)
+            results, aliases = rebuild_indices(indices=indexes)
             sys.stdout.write(u"complete.\n")
             for alias, index in aliases:
                 print u"'{0}' rebuilt and aliased to '{1}'".format(alias, index)
