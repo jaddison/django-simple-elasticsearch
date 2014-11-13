@@ -1,0 +1,34 @@
+# Config file for automatic testing at travis-ci.org
+
+language: python
+
+python:
+  - "3.4"
+  - "3.3"
+  - "2.7"
+  - "2.6"
+  - "pypy"
+env:
+  - DJANGO=1.4.16
+  - DJANGO=1.5.11
+  - DJANGO=1.6.8
+  - DJANGO=1.7.1
+matrix:
+  exclude:
+    - python: "2.6"
+      env: DJANGO=1.7
+    - python: "3.3"
+      env: DJANGO=1.4.16
+    - python: "3.4"
+      env: DJANGO=1.4.16
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+#install: pip install -r requirements.txt
+install:
+  - pip install -q Django==$DJANGO --use-mirrors
+  - pip install coveralls
+#  - pip install -r test_requirements.pip
+script:
+  - coverage run --source=simple_elasticsearch setup.py test
+after_success:
+  - coveralls
+
