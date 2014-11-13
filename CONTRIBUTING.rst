@@ -76,7 +76,7 @@ Ready to contribute? Here's how to set up `django-simple-elasticsearch` for loca
 
 5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
 
-    $ flake8 django-simple-elasticsearch tests
+    $ flake8 simple_elasticsearch
     $ python setup.py test
     $ tox
 
@@ -102,10 +102,3 @@ Before you submit a pull request, check that it meets these guidelines:
 3. The pull request should work for Python 2.6, 2.7, 3.3, and 3.4, and for PyPy. Check
    https://travis-ci.org/jaddison/django-simple-elasticsearch/pull_requests
    and make sure that the tests pass for all supported Python versions.
-
-Tips
-----
-
-To run a subset of tests::
-
-    $ python -m unittest tests.test_django-simple-elasticsearch
