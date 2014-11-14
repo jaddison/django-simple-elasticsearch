@@ -1,17 +1,20 @@
+.. role:: python(code)
+   :language: python
+
 Usage
 =====
 
 For a minimal investment of time, Django Simple Elasticsearch offers a number of perks. Implementing a class
-with the `ElasticsearchIndexMixin` lets you:
+with the :python:`ElasticsearchIndexMixin` lets you:
 
-* initialize your Elasticsearch indices and mappings via the included `es_manage` management command
-* perform Elasticsearch bulk indexing via the same `es_manage` management command
+* initialize your Elasticsearch indices and mappings via the included :code:`es_manage` management command
+* perform Elasticsearch bulk indexing via the same :code:`es_manage` management command
 * perform Elasticsearch bulk indexing as well as individual index/delete requests on demand in your code
-* connect the available `ElasticsearchIndexMixin` save and delete handlers to Django's available
-  model signals (ie `post_save`, `post_delete`)
+* connect the available :python:`ElasticsearchIndexMixin` save and delete handlers to Django's available
+  model signals (ie :python:`post_save`, :python:`post_delete`)
 
-Let's look at an example implementation of `ElasticsearchIndexMixin`. Here's a couple of blog-related Models
-in a `models.py` file:
+Let's look at an example implementation of :python:`ElasticsearchIndexMixin`. Here's a couple of blog-related Models
+in a :code:`models.py` file:
 
 .. code-block:: python
 
@@ -26,8 +29,8 @@ in a `models.py` file:
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)
 
-To start with `simple_elasticsearch`, you'll need to tell it that the `BlogPost` class implements the
-`ElasticsearchIndexMixin` mixin, so in your `settings.py` set the `ELASTICSEARCH_TYPE_CLASSES` setting:
+To start with :python:`simple_elasticsearch`, you'll need to tell it that the `BlogPost` class implements the
+:python:`ElasticsearchIndexMixin` mixin, so in your :code:`settings.py` set the :python:`ELASTICSEARCH_TYPE_CLASSES` setting:
 
 .. code-block:: python
 
@@ -35,12 +38,12 @@ To start with `simple_elasticsearch`, you'll need to tell it that the `BlogPost`
         'blog.models.BlogPost'
     ]
 
-If you do not add this setting, everything will still work except for the `es_manage` command - it won't know
+If you do not add this setting, everything will still work except for the :code:`es_manage` command - it won't know
 what indices to create, type mappings to set or what objects to index. As you add additional
-`ElasticsearchIndexMixin`-based index handlers, add them to this list.
+:python:`ElasticsearchIndexMixin`-based index handlers, add them to this list.
 
-All right, let's add in `ElasticsearchIndexMixin` to the `BlogPost` model. Only pertinent changes from the
-above `models.py` are shown:
+All right, let's add in :python:`ElasticsearchIndexMixin` to the :python:`BlogPost` model. Only pertinent changes from the
+above :code:`models.py` are shown:
 
 .. code-block:: python
 
@@ -114,12 +117,12 @@ above `models.py` are shown:
                 }
             }
 
-With this mixin implementation, you can now use the `es_manage` management command to bulk reindex all `BlogPost`
-items. Note that there are additional `@classmethods` you can override to customize functionality. Sane defaults
+With this mixin implementation, you can now use the :code:`es_manage` management command to bulk reindex all :python:`BlogPost`
+items. Note that there are additional :python:`@classmethods` you can override to customize functionality. Sane defaults
 have been provided for these - see the source for details.
 
-Of course, our `BlogPost` implementation doesn't ensure that your Elasticsearch index is updated every time you
-save or delete - for this, you can use the `ElasticsearchIndexMixin` built-in save and delete handlers.
+Of course, our :python:`BlogPost` implementation doesn't ensure that your Elasticsearch index is updated every time you
+save or delete - for this, you can use the :python:`ElasticsearchIndexMixin` built-in save and delete handlers.
 
 .. code-block:: python
 
@@ -136,4 +139,4 @@ TODO:
 
 * add examples for more complex data situations
 * add examples of search form usage
-* add examples of using `es_manage`
+* add examples of using :code:`es_manage`
