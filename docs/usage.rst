@@ -26,7 +26,7 @@ in a :code:`models.py` file:
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)
 
-To start with :code:`simple_elasticsearch`, you'll need to tell it that the `BlogPost` class implements the
+To start with :code:`simple_elasticsearch`, you'll need to tell it that the :code:`BlogPost` class implements the
 :code:`ElasticsearchIndexMixin` mixin, so in your :code:`settings.py` set the :code:`ELASTICSEARCH_TYPE_CLASSES` setting:
 
 .. code-block:: python

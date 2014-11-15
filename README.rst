@@ -50,7 +50,7 @@ Or::
 License
 -------
 
-django-simple-elasticsearch is licensed as free software under the BSD license.
+**django-simple-elasticsearch** is licensed as free software under the BSD license.
 
 Todo
 ----
