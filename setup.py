@@ -7,6 +7,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
+import simple_elasticsearch
 
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
@@ -21,7 +22,7 @@ test_requirements = [
 
 setup(
     name='django-simple-elasticsearch',
-    version='0.9.2',
+    version=simple_elasticsearch.__version__,
     description='Simple ElasticSearch indexing integration for Django.',
     long_description=readme + '\n\n' + history,
     author='James Addison',

@@ -14,9 +14,7 @@ IS_PROD = False
 IS_TEST = 'test' in sys.argv or 'test_coverage' in sys.argv
 
 SECRET_KEY = 'c!66li$a&_7q6o)-*va5#mbdmdizyvi4qo6!u90=l%$5pk68+-'
-
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -30,6 +28,11 @@ INSTALLED_APPS = (
 
     'simple_elasticsearch'
 )
+
+if IS_TEST:
+    ELASTICSEARCH_TYPE_CLASSES = [
+        'simple_elasticsearch.models.BlogPost'
+    ]
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',

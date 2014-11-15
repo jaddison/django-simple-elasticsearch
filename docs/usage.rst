@@ -56,16 +56,16 @@ above :code:`models.py` are shown:
         created_at = models.DateTimeField(auto_now_add=True)
 
         @classmethod
+        def get_queryset(cls):
+            return BlogPost.objects.all().select_related('blog')
+
+        @classmethod
         def get_index_name(cls):
             return 'blog'
 
         @classmethod
         def get_type_name(cls):
             return 'posts'
-
-        @classmethod
-        def get_queryset(cls):
-            return BlogPost.objects.all().select_related('blog')
 
         @classmethod
         def get_type_mapping(cls):

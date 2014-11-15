@@ -97,7 +97,7 @@ class ElasticsearchIndexMixin(object):
             es.bulk(tmp)
 
     @classmethod
-    def index(cls, obj, index_name=''):
+    def index_add(cls, obj, index_name=''):
         if obj and cls.should_index(obj):
             cls.get_es().index(
                 index_name or cls.get_index_name(),
@@ -110,7 +110,7 @@ class ElasticsearchIndexMixin(object):
         return False
 
     @classmethod
-    def delete(cls, obj, index_name=''):
+    def index_delete(cls, obj, index_name=''):
         if obj:
             try:
                 cls.get_es().delete(
@@ -126,18 +126,18 @@ class ElasticsearchIndexMixin(object):
         return False
 
     @classmethod
-    def index_or_delete(cls, obj, index_name=''):
+    def index_add_or_delete(cls, obj, index_name=''):
         if obj:
             if cls.should_index(obj):
-                return cls.index(obj, index_name)
+                return cls.index_add(obj, index_name)
             else:
-                return cls.delete(obj, index_name)
+                return cls.index_delete(obj, index_name)
         return False
 
     @classmethod
     def save_handler(cls, sender, instance, **kwargs):
-        cls.index_or_delete(instance)
+        cls.index_add_or_delete(instance)
 
     @classmethod
     def delete_handler(cls, sender, instance, **kwargs):
-        cls.delete(instance)
+        cls.index_delete(instance)
