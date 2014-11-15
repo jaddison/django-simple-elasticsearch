@@ -41,13 +41,9 @@ Installation
 
 At the command line::
 
-.. code-block::
-
     $ easy_install django-simple-elasticsearch
 
 Or::
-
-.. code-block::
 
     $ pip install django-simple-elasticsearch
 
