@@ -1,7 +1,7 @@
 from django.conf import settings
 
 
-if settings.IS_TEST:
+if getattr(settings, 'IS_TEST', False):
     from django.db import models
     from django.db.models.signals import post_save, pre_delete
 
