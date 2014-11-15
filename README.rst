@@ -24,7 +24,7 @@ longer maintained.**
 Features
 --------
 
-* class mixin with a set of `@classmethods` used to handle:
+* class mixin with a set of :code:`@classmethods` used to handle:
  * type mapping definition
  * individual object indexing and deletion
  * bulk object indexing
@@ -33,7 +33,7 @@ Features
  * uses Elasticsearch aliases to ease the burden of re-indexing
 * small set of Django classes and functions to help deal with Elasticsearch querying
  * base search form class to handle input validation, query preparation and response handling
- * multi-search processor class to batch multiple Elasticsearch queries via `_msearch`
+ * multi-search processor class to batch multiple Elasticsearch queries via :code:`_msearch`
  * 'get' shortcut functions
 
 Installation
@@ -41,9 +41,13 @@ Installation
 
 At the command line::
 
+.. code-block::
+
     $ easy_install django-simple-elasticsearch
 
 Or::
+
+.. code-block::
 
     $ pip install django-simple-elasticsearch
 

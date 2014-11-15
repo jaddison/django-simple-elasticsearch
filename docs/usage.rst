@@ -1,19 +1,16 @@
-.. role:: python(code)
-   :language: python
-
 Usage
 =====
 
 For a minimal investment of time, Django Simple Elasticsearch offers a number of perks. Implementing a class
-with the :python:`ElasticsearchIndexMixin` lets you:
+with the :code:`ElasticsearchIndexMixin` lets you:
 
 * initialize your Elasticsearch indices and mappings via the included :code:`es_manage` management command
 * perform Elasticsearch bulk indexing via the same :code:`es_manage` management command
 * perform Elasticsearch bulk indexing as well as individual index/delete requests on demand in your code
-* connect the available :python:`ElasticsearchIndexMixin` save and delete handlers to Django's available
-  model signals (ie :python:`post_save`, :python:`post_delete`)
+* connect the available :code:`ElasticsearchIndexMixin` save and delete handlers to Django's available
+  model signals (ie :code:`post_save`, :code:`post_delete`)
 
-Let's look at an example implementation of :python:`ElasticsearchIndexMixin`. Here's a couple of blog-related Models
+Let's look at an example implementation of :code:`ElasticsearchIndexMixin`. Here's a couple of blog-related Models
 in a :code:`models.py` file:
 
 .. code-block:: python
@@ -29,8 +26,8 @@ in a :code:`models.py` file:
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)
 
-To start with :python:`simple_elasticsearch`, you'll need to tell it that the `BlogPost` class implements the
-:python:`ElasticsearchIndexMixin` mixin, so in your :code:`settings.py` set the :python:`ELASTICSEARCH_TYPE_CLASSES` setting:
+To start with :code:`simple_elasticsearch`, you'll need to tell it that the `BlogPost` class implements the
+:code:`ElasticsearchIndexMixin` mixin, so in your :code:`settings.py` set the :code:`ELASTICSEARCH_TYPE_CLASSES` setting:
 
 .. code-block:: python
 
@@ -40,9 +37,9 @@ To start with :python:`simple_elasticsearch`, you'll need to tell it that the `B
 
 If you do not add this setting, everything will still work except for the :code:`es_manage` command - it won't know
 what indices to create, type mappings to set or what objects to index. As you add additional
-:python:`ElasticsearchIndexMixin`-based index handlers, add them to this list.
+:code:`ElasticsearchIndexMixin`-based index handlers, add them to this list.
 
-All right, let's add in :python:`ElasticsearchIndexMixin` to the :python:`BlogPost` model. Only pertinent changes from the
+All right, let's add in :code:`ElasticsearchIndexMixin` to the :code:`BlogPost` model. Only pertinent changes from the
 above :code:`models.py` are shown:
 
 .. code-block:: python
@@ -117,12 +114,12 @@ above :code:`models.py` are shown:
                 }
             }
 
-With this mixin implementation, you can now use the :code:`es_manage` management command to bulk reindex all :python:`BlogPost`
-items. Note that there are additional :python:`@classmethods` you can override to customize functionality. Sane defaults
+With this mixin implementation, you can now use the :code:`es_manage` management command to bulk reindex all :code:`BlogPost`
+items. Note that there are additional :code:`@classmethods` you can override to customize functionality. Sane defaults
 have been provided for these - see the source for details.
 
-Of course, our :python:`BlogPost` implementation doesn't ensure that your Elasticsearch index is updated every time you
-save or delete - for this, you can use the :python:`ElasticsearchIndexMixin` built-in save and delete handlers.
+Of course, our :code:`BlogPost` implementation doesn't ensure that your Elasticsearch index is updated every time you
+save or delete - for this, you can use the :code:`ElasticsearchIndexMixin` built-in save and delete handlers.
 
 .. code-block:: python
 
