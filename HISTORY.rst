@@ -3,6 +3,11 @@
 History
 -------
 
+0.9.5 (2014-11-15)
+---------------------
+
+* Added in tox support, initial set of test cases and verified travis-ci is working.
+
 0.9.2 (2014-11-12)
 ---------------------
 

@@ -79,5 +79,9 @@ if getattr(settings, 'IS_TEST', False):
                 }
             }
 
+        @classmethod
+        def should_index(cls, obj):
+            return obj.slug != 'DO-NOT-INDEX'
+
     post_save.connect(BlogPost.save_handler, sender=BlogPost)
     pre_delete.connect(BlogPost.delete_handler, sender=BlogPost)
