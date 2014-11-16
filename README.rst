@@ -24,7 +24,7 @@ longer maintained.**
 Documentation
 -------------
 
-Visit the [django-simple-elasticsearch documentation on ReadTheDocs](http://django-simple-elasticsearch.readthedocs.org/).
+Visit the `django-simple-elasticsearch documentation on ReadTheDocs <http://django-simple-elasticsearch.readthedocs.org/>`_.
 
 Features
 --------
