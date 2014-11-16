@@ -70,8 +70,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Django Simple Elasticsearch'
-copyright = u'2014, James Addison'
+project = 'Django Simple Elasticsearch'
+copyright = '2014, James Addison'
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -224,8 +224,8 @@ latex_elements = {
 # [howto/manual]).
 latex_documents = [
     ('index', 'simple_elasticsearch.tex',
-     u'Django Simple Elasticsearch Documentation',
-     u'James Addison', 'manual'),
+     'Django Simple Elasticsearch Documentation',
+     'James Addison', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at
@@ -255,8 +255,8 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'simple_elasticsearch',
-     u'Django Simple Elasticsearch Documentation',
-     [u'James Addison'], 1)
+     'Django Simple Elasticsearch Documentation',
+     ['James Addison'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -270,8 +270,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     ('index', 'simple_elasticsearch',
-     u'Django Simple Elasticsearch Documentation',
-     u'James Addison',
+     'Django Simple Elasticsearch Documentation',
+     'James Addison',
      'simple_elasticsearch',
      'One line description of project.',
      'Miscellaneous'),

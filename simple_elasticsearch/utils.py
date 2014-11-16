@@ -23,7 +23,7 @@ def get_indices(indices=[]):
     if not _elasticsearch_indices:
         type_classes = getattr(settings, 'ELASTICSEARCH_TYPE_CLASSES', ())
         if not type_classes:
-            raise Exception(u'Missing `ELASTICSEARCH_TYPE_CLASSES` in project `settings`.')
+            raise Exception('Missing `ELASTICSEARCH_TYPE_CLASSES` in project `settings`.')
 
         for type_class in type_classes:
             package_name, klass_name = type_class.rsplit('.', 1)
@@ -31,7 +31,7 @@ def get_indices(indices=[]):
                 package = import_module(package_name)
                 klass = getattr(package, klass_name)
             except ImportError:
-                sys.stderr.write(u'Unable to import `{}`.\n'.format(type_class))
+                sys.stderr.write('Unable to import `{}`.\n'.format(type_class))
                 continue
             _elasticsearch_indices[klass.get_index_name()].append(klass)
 
@@ -87,7 +87,7 @@ def create_indices(es=None, indices=[], set_aliases=True):
             es_settings.ELASTICSEARCH_CUSTOM_INDEX_SETTINGS.get(index_alias, {})
         )
 
-        index_name = u"{0}-{1}".format(index_alias, now)
+        index_name = "{0}-{1}".format(index_alias, now)
 
         aliases.append((index_alias, index_name))
 
@@ -129,7 +129,7 @@ def rebuild_indices(es=None, indices=[], set_aliases=True):
         try:
             type_class.bulk_index(es, index_name)
         except NotImplementedError:
-            sys.stderr.write(u'`bulk_index` not implemented on `{}`.\n'.format(type_class.get_index_name()))
+            sys.stderr.write('`bulk_index` not implemented on `{}`.\n'.format(type_class.get_index_name()))
             continue
 
     # return to the norm for db query logging
