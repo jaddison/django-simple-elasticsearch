@@ -3,13 +3,16 @@ Django Simple Elasticsearch
 ===========================
 
 .. image:: https://badge.fury.io/py/django-simple-elasticsearch.png
-    :target: http://badge.fury.io/py/django-simple-elasticsearch
+  :target: http://badge.fury.io/py/django-simple-elasticsearch
 
 .. image:: https://travis-ci.org/jaddison/django-simple-elasticsearch.png?branch=master
-        :target: https://travis-ci.org/jaddison/django-simple-elasticsearch
+  :target: https://travis-ci.org/jaddison/django-simple-elasticsearch
+
+.. image:: https://coveralls.io/repos/jaddison/django-simple-elasticsearch/badge.png
+  :target: https://coveralls.io/r/jaddison/django-simple-elasticsearch
 
 .. image:: https://pypip.in/d/django-simple-elasticsearch/badge.png
-        :target: https://pypi.python.org/pypi/django-simple-elasticsearch
+  :target: https://pypi.python.org/pypi/django-simple-elasticsearch
 
 
 This package provides a simple method of creating Elasticsearch indexes for

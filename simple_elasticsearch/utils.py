@@ -39,7 +39,7 @@ def get_indices(indices=[]):
         return _elasticsearch_indices
     else:
         result = {}
-        for k, v in _elasticsearch_indices.iteritems():
+        for k, v in _elasticsearch_indices.items():
             if k in indices:
                 result[k] = v
         return result
@@ -50,8 +50,8 @@ def create_aliases(es=None, indices=[]):
 
     current_aliases = es.indices.get_aliases()
     aliases_for_removal = collections.defaultdict(lambda: [])
-    for item, tmp in current_aliases.iteritems():
-        for iname in tmp.get('aliases', {}).keys():
+    for item, tmp in current_aliases.items():
+        for iname in list(tmp.get('aliases', {}).keys()):
             aliases_for_removal[iname].append(item)
 
     actions = []
@@ -80,7 +80,7 @@ def create_indices(es=None, indices=[], set_aliases=True):
 
     aliases = []
     now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    for index_alias, type_classes in get_indices(indices).iteritems():
+    for index_alias, type_classes in get_indices(indices).items():
         index_settings = es_settings.ELASTICSEARCH_DEFAULT_INDEX_SETTINGS
         index_settings = recursive_dict_update(
             index_settings,
@@ -142,7 +142,7 @@ def rebuild_indices(es=None, indices=[], set_aliases=True):
 
 
 def recursive_dict_update(d, u):
-    for k, v in u.iteritems():
+    for k, v in u.items():
         if isinstance(v, collections.Mapping):
             r = recursive_dict_update(d.get(k, {}), v)
             d[k] = r

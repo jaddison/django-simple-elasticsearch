@@ -119,7 +119,7 @@ class ElasticsearchIndexMixin(object):
                     cls.get_document_id(obj),
                     **cls.get_request_params(obj)
                 )
-            except TransportError, e:
+            except TransportError as e:
                 if e.status_code != 404:
                     raise
             return True

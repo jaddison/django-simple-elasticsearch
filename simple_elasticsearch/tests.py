@@ -1,6 +1,11 @@
 from django.test import TestCase
 from elasticsearch import Elasticsearch
 import mock
+try:
+    # `reload` is not a python3 builtin like python2
+    reload
+except NameError:
+    from imp import reload
 
 from . import settings as es_settings
 from .mixins import ElasticsearchIndexMixin
@@ -36,7 +41,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
             body="DO-NOT-INDEX body"
         )
 
-        for x in xrange(1, 10):
+        for x in range(1, 10):
             BlogPost.objects.create(
                 blog=self.blog,
                 title="blog post title {0}".format(x),
