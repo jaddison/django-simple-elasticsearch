@@ -1,6 +1,3 @@
-import contextlib
-
-from django.db.models.signals import post_save, pre_delete
 from django.test import TestCase
 from elasticsearch import Elasticsearch
 import mock
@@ -14,37 +11,12 @@ class ElasticsearchIndexMixinClass(ElasticsearchIndexMixin):
     pass
 
 
-@contextlib.contextmanager
-def mock_signal_receiver(signal, wraps=None, **kwargs):
-    """
-    Borrowed from: https://github.com/dcramer/mock-django/blob/master/mock_django/signals.py
-
-    Temporarily attaches a receiver to the provided ``signal`` within the scope
-    of the context manager.
-    The mocked receiver is returned as the ``as`` target of the ``with``
-    statement.
-    To have the mocked receiver wrap a callable, pass the callable as the
-    ``wraps`` keyword argument. All other keyword arguments provided are passed
-    through to the signal's ``connect`` method.
-    >>> with mock_signal_receiver(post_save, sender=Model) as receiver:
-    >>>     Model.objects.create()
-    >>>     assert receiver.call_count = 1
-    """
-    if wraps is None:
-        wraps = lambda *args, **kwargs: None
-
-    receiver = mock.Mock(wraps=wraps)
-    signal.connect(receiver, **kwargs)
-    yield receiver
-    signal.disconnect(receiver)
-
-
 class ElasticsearchIndexMixinTestCase(TestCase):
     @property
     def latest_post(self):
         return BlogPost.objects.select_related('blog').latest('id')
 
-    @mock.patch('elasticsearch.Elasticsearch.index')
+    @mock.patch('simple_elasticsearch.mixins.Elasticsearch.index')
     def setUp(self, mock_index):
         self.blog = Blog.objects.create(
             name='test blog name',
@@ -107,35 +79,29 @@ class ElasticsearchIndexMixinTestCase(TestCase):
             self.assertEqual(result.transport.sniffer_timeout, 15)
         reload(es_settings)
 
-    def test__save_handler(self):
+    @mock.patch('simple_elasticsearch.mixins.ElasticsearchIndexMixin.index_add_or_delete')
+    def test__save_handler(self, mock_index_add_or_delete):
         # with a create call
-        with mock_signal_receiver(post_save, sender=BlogPost) as receiver:
-            post = BlogPost.objects.create(
-                blog=self.blog,
-                title="blog post title foo",
-                slug="blog-post-title-foo",
-                body="blog post body foo"
-            )
-            self.assertEquals(receiver.call_count, 1)
-            self.assertEquals(receiver.call_args[1]['sender'], BlogPost)
-            self.assertEquals(receiver.call_args[1]['instance'], post)
+        post = BlogPost.objects.create(
+            blog=self.blog,
+            title="blog post title foo",
+            slug="blog-post-title-foo",
+            body="blog post body foo"
+        )
+        mock_index_add_or_delete.assert_called_with(post)
+        mock_index_add_or_delete.reset_mock()
 
         # with a plain save call
-        with mock_signal_receiver(post_save, sender=BlogPost) as receiver:
-            post.save()
-            self.assertEquals(receiver.call_count, 1)
-            self.assertEquals(receiver.call_args[1]['sender'], BlogPost)
-            self.assertEquals(receiver.call_args[1]['instance'], post)
+        post.save()
+        mock_index_add_or_delete.assert_called_with(post)
 
-    def test__delete_handler(self):
-        with mock_signal_receiver(pre_delete, sender=BlogPost) as receiver:
-            post = self.latest_post
-            post.delete()
-            self.assertEquals(receiver.call_count, 1)
-            self.assertEquals(receiver.call_args[1]['sender'], BlogPost)
-            self.assertEquals(receiver.call_args[1]['instance'], post)
+    @mock.patch('simple_elasticsearch.mixins.ElasticsearchIndexMixin.index_delete')
+    def test__delete_handler(self, mock_index_delete):
+        post = self.latest_post
+        post.delete()
+        mock_index_delete.assert_called_with(post)
 
-    @mock.patch('elasticsearch.Elasticsearch.index')
+    @mock.patch('simple_elasticsearch.mixins.Elasticsearch.index')
     def test__index_add(self, mock_index):
         post = self.latest_post
         mock_index.return_value = {}
@@ -162,7 +128,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         result = BlogPost.index_add(post)
         self.assertFalse(result)
 
-    @mock.patch('elasticsearch.Elasticsearch.delete')
+    @mock.patch('simple_elasticsearch.mixins.Elasticsearch.delete')
     def test__index_delete(self, mock_delete):
         post = self.latest_post
         mock_delete.return_value = {
@@ -312,7 +278,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         with self.assertRaises(NotImplementedError):
             ElasticsearchIndexMixinClass.get_document(1)
 
-    @mock.patch('elasticsearch.Elasticsearch.index')
+    @mock.patch('simple_elasticsearch.mixins.Elasticsearch.index')
     def test__should_index(self, mock_index):
         post = self.latest_post
         self.assertTrue(BlogPost.should_index(post))
