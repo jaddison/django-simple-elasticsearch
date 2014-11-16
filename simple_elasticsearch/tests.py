@@ -16,8 +16,9 @@ class ElasticsearchIndexMixinTestCase(TestCase):
     def latest_post(self):
         return BlogPost.objects.select_related('blog').latest('id')
 
+    @mock.patch('simple_elasticsearch.mixins.Elasticsearch.delete')
     @mock.patch('simple_elasticsearch.mixins.Elasticsearch.index')
-    def setUp(self, mock_index):
+    def setUp(self, mock_index, mock_delete):
         self.blog = Blog.objects.create(
             name='test blog name',
             description='test blog description'
@@ -26,7 +27,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         # hack the return value to ensure we save some BlogPosts here;
         # without this mock, the post_save handler indexing blows up
         # as there is no real ES instance running
-        mock_index.return_value = {}
+        mock_index.return_value = mock_delete.return_value = {}
 
         post = BlogPost.objects.create(
             blog=self.blog,
