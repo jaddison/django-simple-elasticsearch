@@ -51,6 +51,10 @@ class ElasticsearchIndexMixin(object):
         return 100
 
     @classmethod
+    def get_query_limit(cls):
+        return 100
+
+    @classmethod
     def should_index(cls, obj):
         return True
 
@@ -60,20 +64,12 @@ class ElasticsearchIndexMixin(object):
 
         tmp = []
 
-        index_all = True
         if queryset is None:
-            index_all = False
             queryset = cls.get_queryset()
 
         # this requires that `get_queryset` is implemented
-        for i, obj in enumerate(queryset_iterator(queryset)):
-            # if we were passed a queryset, then it's not a management command
-            # running this bulk_index, so we should make sure to index and delete
-            # objects as necessary - otherwise, just index them
-            if not index_all and not cls.should_index(obj):
-                delete = True
-            else:
-                delete = False
+        for i, obj in enumerate(queryset_iterator(queryset, cls.get_query_limit())):
+            delete = not cls.should_index(obj)
 
             data = {'delete' if delete else 'index': {
                 '_index': index_name or cls.get_index_name(),

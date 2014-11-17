@@ -21,6 +21,10 @@ if getattr(settings, 'IS_TEST', False):
         created_at = models.DateTimeField(auto_now_add=True)
 
         @classmethod
+        def get_bulk_index_limit(cls):
+            return 2
+
+        @classmethod
         def get_queryset(cls):
             return BlogPost.objects.all().select_related('blog')
 

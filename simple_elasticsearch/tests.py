@@ -260,6 +260,9 @@ class ElasticsearchIndexMixinTestCase(TestCase):
     def test__get_bulk_index_limit(self):
         self.assertTrue(str(BlogPost.get_bulk_index_limit()).isdigit())
 
+    def test__get_query_limit(self):
+        self.assertTrue(str(BlogPost.get_query_limit()).isdigit())
+
     def test__get_document_id(self):
         post = self.latest_post
         result = BlogPost.get_document_id(post)
@@ -295,3 +298,46 @@ class ElasticsearchIndexMixinTestCase(TestCase):
 
     def test__should_index_notimplemented(self):
         self.assertTrue(ElasticsearchIndexMixinClass.should_index(1))
+
+    @mock.patch('simple_elasticsearch.mixins.queryset_iterator')
+    def test__bulk_index_queryset(self, mock_queryset_iterator):
+        queryset = BlogPost.get_queryset().exclude(slug='DO-NOT-INDEX')
+        BlogPost.bulk_index(queryset=queryset)
+        mock_queryset_iterator.assert_called_with(queryset, BlogPost.get_query_limit())
+
+        mock_queryset_iterator.reset_mock()
+
+        queryset = BlogPost.get_queryset()
+        BlogPost.bulk_index()
+        # to compare QuerySets, they must first be converted to lists.
+        self.assertEquals(list(mock_queryset_iterator.call_args[0][0]), list(queryset))
+
+    @mock.patch('simple_elasticsearch.models.BlogPost.get_document')
+    @mock.patch('simple_elasticsearch.models.BlogPost.should_index')
+    @mock.patch('simple_elasticsearch.mixins.Elasticsearch.bulk')
+    def test__bulk_index_should_index(self, mock_bulk, mock_should_index, mock_get_document):
+        # hack the return value to ensure we save some BlogPosts here;
+        # without this mock, the post_save handler indexing blows up
+        # as there is no real ES instance running
+        mock_bulk.return_value = {}
+
+        queryset_count = BlogPost.get_queryset().count()
+        BlogPost.bulk_index()
+        self.assertTrue(mock_should_index.call_count == queryset_count)
+
+    @mock.patch('simple_elasticsearch.models.BlogPost.get_document')
+    @mock.patch('simple_elasticsearch.mixins.Elasticsearch.bulk')
+    def test__bulk_index_get_document(self, mock_bulk, mock_get_document):
+        mock_bulk.return_value = mock_get_document.return_value = {}
+
+        queryset_count = BlogPost.get_queryset().count()
+        BlogPost.bulk_index()
+
+        # One of the items is not meant to be indexed (slug='DO-NOT-INDEX'), so the
+        # get_document function will get called one less time due to this.
+        self.assertTrue(mock_get_document.call_count == (queryset_count - 1))
+
+        # figure out how many times es.bulk() should get called in the
+        # .bulk_index() method and verify it's the same
+        bulk_times = int(queryset_count / BlogPost.get_bulk_index_limit()) + 1
+        self.assertTrue(mock_bulk.call_count == bulk_times)
