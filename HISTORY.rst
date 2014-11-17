@@ -3,6 +3,11 @@
 History
 -------
 
+0.9.7 (2014-11-16)
+---------------------
+
+* Python3 supported mentioned in PyPi categorization; new testcases added. Minor interface change (added `@classmethod`).
+
 0.9.6 (2014-11-16)
 ---------------------
 
