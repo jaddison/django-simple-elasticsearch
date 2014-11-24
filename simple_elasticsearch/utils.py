@@ -2,7 +2,6 @@ import collections
 import datetime
 import gc
 import sys
-
 from django.conf import settings
 from django.http import Http404
 from django.utils.importlib import import_module
@@ -10,15 +9,10 @@ from elasticsearch import Elasticsearch, ElasticsearchException
 
 from . import settings as es_settings
 
-try:
-    import celery
-except ImportError:
-    celery = None
-
-from . import settings as es_settings
-
 
 _elasticsearch_indices = collections.defaultdict(lambda: [])
+
+
 def get_indices(indices=[]):
     if not _elasticsearch_indices:
         type_classes = getattr(settings, 'ELASTICSEARCH_TYPE_CLASSES', ())

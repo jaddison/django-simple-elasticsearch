@@ -1,6 +1,5 @@
 import sys
 from optparse import make_option
-
 from django.core.management.base import BaseCommand, CommandError
 
 from ...utils import get_indices, create_indices, rebuild_indices
@@ -8,6 +7,7 @@ from ...utils import get_indices, create_indices, rebuild_indices
 
 class ESCommandError(CommandError):
     pass
+
 
 class Command(BaseCommand):
     help = ''

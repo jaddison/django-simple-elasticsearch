@@ -13,11 +13,13 @@ readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
-    'elasticsearch>=1.0.0,<2.0.0'
+    'elasticsearch>=1.0.0,<2.0.0',
+    'elasticsearch-dsl>=0.0.2'
 ]
 
 test_requirements = [
-    # TODO: put package test requirements here
+    'datadiff>=1.1.6',
+    'mock>=1.0.1'
 ]
 
 setup(

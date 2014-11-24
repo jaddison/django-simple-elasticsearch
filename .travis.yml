@@ -20,7 +20,7 @@ matrix:
       env: DJANGO=1.4.16
 install:
   - pip install -q Django==$DJANGO
-  - pip install coveralls mock
+  - pip install coveralls
 script:
   - coverage run --source=simple_elasticsearch setup.py test
 after_success:

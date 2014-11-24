@@ -6,6 +6,7 @@ from .utils import queryset_iterator
 
 
 class ElasticsearchIndexMixin(object):
+
     @classmethod
     def get_es(cls):
         if not hasattr(cls, '_es'):

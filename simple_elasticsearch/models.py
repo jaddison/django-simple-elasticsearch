@@ -7,11 +7,9 @@ if getattr(settings, 'IS_TEST', False):
 
     from .mixins import ElasticsearchIndexMixin
 
-
     class Blog(models.Model):
         name = models.CharField(max_length=50)
         description = models.TextField()
-
 
     class BlogPost(models.Model, ElasticsearchIndexMixin):
         blog = models.ForeignKey(Blog)
