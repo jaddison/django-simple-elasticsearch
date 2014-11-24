@@ -6,7 +6,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from elasticsearch_dsl.result import Response
 import mock
-from simple_elasticsearch.forms import ESSearchForm, ESSearchProcessor
+from simple_elasticsearch.forms import ElasticsearchForm, ElasticsearchProcessor
 
 try:
     # `reload` is not a python3 builtin like python2
@@ -23,7 +23,7 @@ class ElasticsearchIndexMixinClass(ElasticsearchIndexMixin):
     pass
 
 
-class BlogPostSearchForm(ESSearchForm):
+class BlogPostSearchForm(ElasticsearchForm):
     q = forms.CharField()
 
     def get_index(self):
@@ -387,9 +387,9 @@ class ESSearchFormTestCase(TestCase):
         form = BlogPostSearchForm(query_params=query_params)
         self.assertEqual(form.query_params, query_params)
 
-    @mock.patch('simple_elasticsearch.forms.ESSearchProcessor.search')
-    @mock.patch('simple_elasticsearch.forms.ESSearchProcessor.add_search')
-    @mock.patch('simple_elasticsearch.forms.ESSearchProcessor.__init__')
+    @mock.patch('simple_elasticsearch.forms.ElasticsearchProcessor.search')
+    @mock.patch('simple_elasticsearch.forms.ElasticsearchProcessor.add_search')
+    @mock.patch('simple_elasticsearch.forms.ElasticsearchProcessor.__init__')
     def test__form_es(self, mock_esp_init, mock_esp_add_search, mock_esp_search):
         # __init__ methods always return None
         mock_esp_init.return_value = None
@@ -401,7 +401,7 @@ class ESSearchFormTestCase(TestCase):
         # by default, the form has no internal Elasticsearch object
         self.assertEqual(self.form.es, None)
 
-        # on search(), ESSearchProcessor() should be initialized with
+        # on search(), ElasticsearchProcessor() should be initialized with
         # a None Elasticsearch object (the form's)
         self.form.search()
         mock_esp_init.assert_called_with(None)
@@ -428,8 +428,8 @@ class ESSearchFormTestCase(TestCase):
         form = BlogPostSearchForm({'q': 'foo'})
         self.assertTrue(form.is_valid())
 
-    @mock.patch('simple_elasticsearch.forms.ESSearchProcessor.search')
-    @mock.patch('simple_elasticsearch.forms.ESSearchProcessor.add_search')
+    @mock.patch('simple_elasticsearch.forms.ElasticsearchProcessor.search')
+    @mock.patch('simple_elasticsearch.forms.ElasticsearchProcessor.add_search')
     def test__form_search(self, mock_esp_add_search, mock_esp_search):
         mock_esp_search.return_value = [Response({})]
         self.form.search()
@@ -448,7 +448,7 @@ class ESSearchProcessorTestCase(TestCase):
         self.form.is_valid()
 
     def test__esp_reset(self):
-        esp = ESSearchProcessor()
+        esp = ElasticsearchProcessor()
 
         self.assertTrue(len(esp.bulk_search_data) == 0)
         self.assertTrue(len(esp.page_ranges) == 0)
@@ -464,7 +464,7 @@ class ESSearchProcessorTestCase(TestCase):
         self.assertTrue(len(esp.page_ranges) == 0)
 
     def test__esp_add_query_dict(self):
-        esp = ESSearchProcessor()
+        esp = ElasticsearchProcessor()
 
         page = 1
         page_size = 20
@@ -477,7 +477,7 @@ class ESSearchProcessorTestCase(TestCase):
             }
         }
 
-        # ESSearchProcessor internally sets the from/size parameters
+        # ElasticsearchProcessor internally sets the from/size parameters
         # on the query; we need to compare with those values included
         query_with_size = query.copy()
         query_with_size.update({
@@ -500,14 +500,14 @@ class ESSearchProcessorTestCase(TestCase):
         ddtools.assert_equal(esp.bulk_search_data[1], query_with_size)
 
     def test__esp_add_query_form(self):
-        esp = ESSearchProcessor()
+        esp = ElasticsearchProcessor()
 
         page = 1
         page_size = 20
 
         query = self.form.prepare_query()
 
-        # ESSearchProcessor internally sets the from/size parameters
+        # ElasticsearchProcessor internally sets the from/size parameters
         # on the query; we need to compare with those values included
         query_with_size = query.copy()
         query_with_size.update({
@@ -533,7 +533,7 @@ class ESSearchProcessorTestCase(TestCase):
 
         s = Search.from_dict(query.copy())
 
-        # ESSearchProcessor internally sets the from/size parameters
+        # ElasticsearchProcessor internally sets the from/size parameters
         # on the query; we need to compare with those values included
         query_with_size = query.copy()
         query_with_size.update({
@@ -541,7 +541,7 @@ class ESSearchProcessorTestCase(TestCase):
             'size': page_size
         })
 
-        esp = ESSearchProcessor()
+        esp = ElasticsearchProcessor()
         esp.add_search(s)
         ddtools.assert_equal(esp.bulk_search_data[0], {})
         ddtools.assert_equal(esp.bulk_search_data[1], query_with_size)
@@ -582,7 +582,7 @@ class ESSearchProcessorTestCase(TestCase):
             ]
         }
 
-        esp = ESSearchProcessor()
+        esp = ElasticsearchProcessor()
         esp.add_search({}, index='blog', doc_type='posts')
 
         bulk_data = copy.deepcopy(esp.bulk_search_data)

@@ -6,13 +6,13 @@ from elasticsearch_dsl.result import Response
 from . import settings as es_settings
 
 
-class ESSearchForm(forms.Form):
+class ElasticsearchForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.query_params = kwargs.pop('query_params', {}).copy()
         self.es = kwargs.pop('es', None)
 
-        super(ESSearchForm, self).__init__(*args, **kwargs)
+        super(ElasticsearchForm, self).__init__(*args, **kwargs)
 
     def get_index(self):
         # return the ES index name (or multiple comma-separated) you want to
@@ -28,15 +28,15 @@ class ESSearchForm(forms.Form):
         raise NotImplementedError
 
     def search(self, page=1, page_size=20):
-        esp = ESSearchProcessor(self.es)
+        esp = ElasticsearchProcessor(self.es)
         esp.add_search(self, page, page_size)
         responses = esp.search()
 
-        # there will only be a single response from a ESSearchForm
+        # there will only be a single response from a ElasticsearchForm
         return responses[0]
 
 
-class ESSearchProcessor(object):
+class ElasticsearchProcessor(object):
 
     def __init__(self, es=None):
         self.es = es or Elasticsearch(es_settings.ELASTICSEARCH_SERVER)
@@ -48,7 +48,7 @@ class ESSearchProcessor(object):
         self.page_ranges = []
 
     def add_search(self, query, page=1, page_size=20, index='', doc_type='', query_params={}):
-        if isinstance(query, ESSearchForm):
+        if isinstance(query, ElasticsearchForm):
             form = query
             index = index or form.get_index()
             doc_type = doc_type or form.get_type()
