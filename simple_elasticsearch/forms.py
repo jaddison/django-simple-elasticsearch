@@ -1,9 +1,48 @@
 from django import forms
+from django.core.paginator import Paginator, Page
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from elasticsearch_dsl.result import Response
+from elasticsearch_dsl.utils import AttrDict
 
 from . import settings as es_settings
+
+
+class DSEPaginator(Paginator):
+    """
+    Override Django's built-in Paginator class to take in a count/total number of items;
+    Elasticsearch provides the total as a part of the query results, so we can minimize hits.
+    """
+    def __init__(self, *args, **kwargs):
+        super(DSEPaginator, self).__init__(*args, **kwargs)
+        self._count = self.object_list.hits.total
+
+    def page(self, number):
+        # this is overridden to prevent any slicing of the object_list - Elasticsearch has
+        # returned the sliced data already.
+        number = self.validate_number(number)
+        return Page(self.object_list, number, self)
+
+
+class DSEResponse(Response):
+    def __init__(self, d, page=None, page_size=None):
+        super(DSEResponse, self).__init__(d)
+
+        # __setattr__ is overridden in parent class; assign these values
+        # manually to prevent the new __setattr__ from firing
+        super(AttrDict, self).__setattr__('_page_num', page)
+        super(AttrDict, self).__setattr__('_page_size', page_size)
+
+    def __len__(self):
+        return len(self.hits)
+
+    @property
+    def page(self):
+        if not hasattr(self, '_page'):
+            paginator = DSEPaginator(self, self._page_size)
+            # avoid assigning _page into self._d_
+            super(AttrDict, self).__setattr__('_page', paginator.page(self._page_num))
+        return self._page
 
 
 class ElasticsearchForm(forms.Form):
@@ -96,14 +135,7 @@ class ElasticsearchProcessor(object):
             data = self.es.msearch(self.bulk_search_data)
             if data:
                 for i, tmp in enumerate(data.get('responses', [])):
-                    response = Response(tmp)
-
-                    # hack the from & size values into response.hits so the user
-                    # can do some (fake) Django pagination if desired
-                    hits = response.get('hits', {})
-                    hits['from'], hits['size'] = self.page_ranges[i]
-
-                    responses.append(response)
+                    responses.append(DSEResponse(tmp, *self.page_ranges[i]))
 
         self.reset()
 

@@ -3,6 +3,16 @@
 History
 -------
 
+0.9.9 (2014-11-24)
+---------------------
+
+* Renamed search form related classes - more breaking changes. Added in support for Django's pagination classes (internal hack).
+
+0.9.8 (2014-11-23)
+---------------------
+
+* Revamped search form related classes - includes breaking changes.
+
 0.9.7 (2014-11-16)
 ---------------------
 

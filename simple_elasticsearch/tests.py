@@ -1,6 +1,7 @@
 import copy
 from datadiff import tools as ddtools
 from django import forms
+from django.core.paginator import Page
 from django.test import TestCase
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
@@ -576,25 +577,54 @@ class ESSearchProcessorTestCase(TestCase):
             "responses": [
                 {
                     "hits": {
-                        "hits": []
+                        "total": 20,
+                        "hits": [
+                            {
+                                "_index": "blog",
+                                "_type": "posts",
+                                "_id": "1",
+                                "_score": 1.0,
+                                "_source": {"account_number": 1,}
+                            }, {
+                                "_index": "blog",
+                                "_type": "posts",
+                                "_id": "6",
+                                "_score": 1.0,
+                                "_source": {"account_number": 6,}
+                            }
+                        ]
                     }
                 }
             ]
         }
 
         esp = ElasticsearchProcessor()
-        esp.add_search({}, index='blog', doc_type='posts')
+        esp.add_search({}, 3, 2, index='blog', doc_type='posts')
 
         bulk_data = copy.deepcopy(esp.bulk_search_data)
-        ddtools.assert_equal(bulk_data, [{'index': 'blog', 'type': 'posts'}, {'from': 0, 'size': 20}])
+        ddtools.assert_equal(bulk_data, [{'index': 'blog', 'type': 'posts'}, {'from': 4, 'size': 2}])
 
         responses = esp.search()
         mock_msearch.assert_called_with(bulk_data)
 
         # ensure that our hack to get size and from into the hit
         # data works
-        self.assertTrue('size' in responses[0].get('hits'))
-        self.assertTrue('from' in responses[0].get('hits'))
+        self.assertEqual(responses[0]._page_num, 3)
+        self.assertEqual(responses[0]._page_size, 2)
 
         # ensure that the bulk data gets reset
         self.assertEqual(len(esp.bulk_search_data), 0)
+
+        page = responses[0].page
+        self.assertIsInstance(page, Page)
+        self.assertEqual(page.number, 3)
+        self.assertTrue(page.has_next())
+        self.assertTrue(page.has_previous())
+        self.assertEqual(len(page), 2)  # 2 items on the page
+
+        mock_msearch.reset()
+        esp.add_search({}, 1, 2, index='blog', doc_type='posts')
+        responses = esp.search()
+        page = responses[0].page
+        self.assertTrue(page.has_next())
+        self.assertFalse(page.has_previous())
