@@ -113,6 +113,16 @@ class ElasticsearchProcessor(object):
             # we don't support any other type of object
             return
 
+        try:
+            page = int(page)
+        except ValueError:
+            page = 1
+
+        try:
+            page_size = int(page_size)
+        except ValueError:
+            page_size = 20
+
         query['from'] = (page - 1) * page_size
         query['size'] = page_size
 

@@ -3,10 +3,16 @@
 History
 -------
 
+0.9.10 (2014-12-04)
+---------------------
+
+* added `page` and `page_size` validation in `add_search()`
+
 0.9.9 (2014-11-24)
 ---------------------
 
-* Renamed search form related classes - more breaking changes. Added in support for Django's pagination classes (internal hack).
+* Renamed search form related classes - more breaking changes. Added in support
+  for Django's pagination classes (internal hack).
 
 0.9.8 (2014-11-23)
 ---------------------
@@ -16,7 +22,8 @@ History
 0.9.7 (2014-11-16)
 ---------------------
 
-* Python3 supported mentioned in PyPi categorization; new testcases added. Minor interface change (added `@classmethod`).
+* Python3 supported mentioned in PyPi categorization; new testcases added. Minor
+  interface change (added `@classmethod`).
 
 0.9.6 (2014-11-16)
 ---------------------
