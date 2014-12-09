@@ -3,6 +3,15 @@
 History
 -------
 
+0.9.11 (2014-12-08)
+---------------------
+
+* added warning if Django's DEBUG=True (causes out of memory errors on constrained
+  systems due to Django query caching)
+* added index setting modification on rebuilding indices to remove replicas, lucene
+  segment merging and disabling the refresh interval - restoring the original
+  settings afterwards.
+
 0.9.10 (2014-12-04)
 ---------------------
 
