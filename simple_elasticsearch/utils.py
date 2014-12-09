@@ -119,12 +119,43 @@ def rebuild_indices(es=None, indices=[], set_aliases=True):
     # oldlevel = db_logger.level
     # db_logger.setLevel(logging.ERROR)
 
+    current_index_name = None
+    current_index_settings = {}
+
+    def change_index():
+        if current_index_name:
+            # restore the original (or their ES defaults) settings back into
+            # the index to restore desired elasticsearch functionality
+            settings = {
+                'number_of_replicas': current_index_settings.get('index', {}).get('number_of_replicas', 1),
+                'refresh_interval': current_index_settings.get('index', {}).get('refresh_interval', '1s'),
+                'merge.policy.merge_factor': current_index_settings.get('index', {}).get('merge.policy.merge_factor', 10)
+            }
+            es.indices.put_settings({'index': settings}, current_index_name)
+            es.indices.refresh(current_index_name)
+
     for type_class, index_alias, index_name in created_indices:
+        if index_name != current_index_name:
+            change_index()
+
+            # save the current index's settings locally so that we can restore them after
+            current_index_settings = es.indices.get_settings(index_name).get(index_name, {}).get('settings', {})
+            current_index_name = index_name
+
+            # modify index settings to speed up bulk indexing and then restore them after
+            es.indices.put_settings({'index': {
+                'number_of_replicas': 0,
+                'refresh_interval': '-1',
+                'merge.policy.merge_factor': 30
+            }}, index=index_name)
+
         try:
             type_class.bulk_index(es, index_name)
         except NotImplementedError:
             sys.stderr.write('`bulk_index` not implemented on `{}`.\n'.format(type_class.get_index_name()))
             continue
+    else:
+        change_index()
 
     # return to the norm for db query logging
     # db_logger.setLevel(oldlevel)

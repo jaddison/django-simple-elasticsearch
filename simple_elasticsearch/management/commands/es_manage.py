@@ -1,5 +1,6 @@
 import sys
 from optparse import make_option
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from ...utils import get_indices, create_indices, rebuild_indices
@@ -27,31 +28,31 @@ class Command(BaseCommand):
             '--list',
             action='store_true',
             dest='list',
-            default=False,
+            default=False
         ),
         make_option(
             '--initialize',
             action='store_true',
             dest='initialize',
-            default=False,
+            default=False
         ),
         make_option(
             '--rebuild',
             action='store_true',
             dest='rebuild',
-            default=False,
+            default=False
         ),
         make_option(
             '--no_input',
             action='store_true',
             dest='no_input',
-            default=False,
+            default=False
         ),
         make_option(
             '--indexes',
             action='store',
             dest='indexes',
-            default='',
+            default=''
         )
     )
 
@@ -77,13 +78,13 @@ class Command(BaseCommand):
                 print("  - type '{0}'".format(type_class.get_type_name()))
 
     def subcommand_initialize(self, indexes=None, no_input=False):
-        input = 'y' if no_input else ''
-        while input != 'y':
-            input = input('Are you sure you want to initialize {0} index(es)? [y/N]: '.format('the ' + ', '.join(indexes) if indexes else '**ALL**')).lower()
-            if input == 'n':
+        user_input = 'y' if no_input else ''
+        while user_input != 'y':
+            user_input = raw_input('Are you sure you want to initialize {0} index(es)? [y/N]: '.format('the ' + ', '.join(indexes) if indexes else '**ALL**')).lower()
+            if user_input == 'n':
                 break
 
-        if input == 'y':
+        if user_input == 'y':
             sys.stdout.write("Creating ES indexes: ")
             results, aliases = create_indices(indices=indexes)
             sys.stdout.write("complete.\n")
@@ -91,13 +92,20 @@ class Command(BaseCommand):
                 print("'{0}' aliased to '{1}'".format(alias, index))
 
     def subcommand_rebuild(self, indexes, no_input=False):
-        input = 'y' if no_input else ''
-        while input != 'y':
-            input = input('Are you sure you want to rebuild {0} index(es)? [y/N]: '.format('the ' + ', '.join(indexes) if indexes else '**ALL**')).lower()
-            if input == 'n':
+        if getattr(settings, 'DEBUG', False):
+            import warnings
+            warnings.warn('Rebuilding with `settings.DEBUG = True` can result in out of memory crashes. See https://docs.djangoproject.com/en/stable/ref/settings/#debug', stacklevel=2)
+
+            # make sure the user continues explicitly after seeing this warning
+            no_input = False
+
+        user_input = 'y' if no_input else ''
+        while user_input != 'y':
+            user_input = raw_input('Are you sure you want to rebuild {0} index(es)? [y/N]: '.format('the ' + ', '.join(indexes) if indexes else '**ALL**')).lower()
+            if user_input in ['n', '']:
                 break
 
-        if input == 'y':
+        if user_input == 'y':
             sys.stdout.write("Rebuilding ES indexes: ")
             results, aliases = rebuild_indices(indices=indexes)
             sys.stdout.write("complete.\n")
@@ -105,14 +113,16 @@ class Command(BaseCommand):
                 print("'{0}' rebuilt and aliased to '{1}'".format(alias, index))
 
         # TODO: need to offer choice to delete old de-aliased indexes
-        # while input != 'y':
-        #     input = raw_input('Are you sure you want to rebuild {0} index(es)? [y/N]: '.format('the ' + ', '.join(indexes) if indexes else '**ALL**')).lower()
-        #     if input == 'n':
+        # while user_input != 'y':
+        #     user_input = raw_input('Are you sure you want to rebuild {0} index(es)? [y/N]: '.format('the ' + ', '.join(indexes) if indexes else '**ALL**')).lower()
+        #     if user_input == 'n':
         #         break
         #
-        # if input == 'y':
+        # if user_input == 'y':
         #     sys.stdout.write("Rebuilding ES indexes: ")
         #     results, aliases = rebuild_indices(indexes)
         #     sys.stdout.write("complete.\n")
         #     for alias, index in aliases:
         #         print "'{0}' rebuilt and aliased to '{1}'".format(alias, index)
+        else:
+            print("You chose not to rebuild indices.")
