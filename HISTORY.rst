@@ -3,6 +3,11 @@
 History
 -------
 
+0.9.12 (2014-12-17)
+---------------------
+
+* fixed an issue where per-item request parameters were being added to the bulk data request JSON incorrectly. Tests updated.
+
 0.9.11 (2014-12-08)
 ---------------------
 

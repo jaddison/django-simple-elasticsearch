@@ -35,6 +35,10 @@ if getattr(settings, 'IS_TEST', False):
             return 'posts'
 
         @classmethod
+        def get_request_params(cls, obj):
+            return {'routing': obj.blog_id}
+
+        @classmethod
         def get_type_mapping(cls):
             return {
                 "properties": {

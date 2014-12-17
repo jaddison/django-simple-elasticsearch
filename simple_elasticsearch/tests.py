@@ -146,13 +146,13 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         # the correct variables, with normal index name
         result = BlogPost.index_add(post)
         self.assertTrue(result)
-        mock_index.assert_called_with('blog', 'posts', BlogPost.get_document(post), post.pk)
+        mock_index.assert_called_with('blog', 'posts', BlogPost.get_document(post), post.pk, routing=1)
 
         # make sure indexing an item calls Elasticsearch.index() with
         # the correct variables, with non-standard index name
         result = BlogPost.index_add(post, 'foo')
         self.assertTrue(result)
-        mock_index.assert_called_with('foo', 'posts', BlogPost.get_document(post), post.pk)
+        mock_index.assert_called_with('foo', 'posts', BlogPost.get_document(post), post.pk, routing=1)
 
         # this one should not index (return false) because the
         # 'should_index' for this post should make it skip it
@@ -175,13 +175,13 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         # the correct variables, with normal index name
         result = BlogPost.index_delete(post)
         self.assertTrue(result)
-        mock_delete.assert_called_with('blog', 'posts', post.pk)
+        mock_delete.assert_called_with('blog', 'posts', post.pk, routing=1)
 
         # make sure deleting an item calls Elasticsearch.delete() with
         # the correct variables, with non-standard index name
         result = BlogPost.index_delete(post, 'foo')
         self.assertTrue(result)
-        mock_delete.assert_called_with('foo', 'posts', post.pk)
+        mock_delete.assert_called_with('foo', 'posts', post.pk, routing=1)
 
     @mock.patch('simple_elasticsearch.mixins.ElasticsearchIndexMixin.index_add')
     @mock.patch('simple_elasticsearch.mixins.ElasticsearchIndexMixin.index_delete')
@@ -277,7 +277,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
     def test__get_request_params(self):
         post = self.latest_post
         # TODO: implement the method to test it works properly
-        self.assertEqual(BlogPost.get_request_params(post), {})
+        self.assertEqual(BlogPost.get_request_params(post), {'routing':1})
 
     def test__get_request_params_notimplemented(self):
         self.assertEqual(ElasticsearchIndexMixinClass.get_request_params(1), {})

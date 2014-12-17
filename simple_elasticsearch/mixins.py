@@ -72,12 +72,13 @@ class ElasticsearchIndexMixin(object):
         for i, obj in enumerate(queryset_iterator(queryset, cls.get_query_limit())):
             delete = not cls.should_index(obj)
 
-            data = {'delete' if delete else 'index': {
+            data = {
                 '_index': index_name or cls.get_index_name(),
                 '_type': cls.get_type_name(),
                 '_id': cls.get_document_id(obj)
-            }}
+            }
             data.update(cls.get_request_params(obj))
+            data = {'delete' if delete else 'index': data}
 
             # bulk operation instructions/details
             tmp.append(data)
