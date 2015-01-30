@@ -3,6 +3,12 @@
 History
 -------
 
+0.9.13 (2014-12-17)
+---------------------
+
+* Added in new `post_indices_create` and `post_indices_rebuild` signals to allow users to run actions at various points during the index creation and bulk indexing processes.
+
+
 0.9.12 (2014-12-17)
 ---------------------
 

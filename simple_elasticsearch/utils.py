@@ -8,6 +8,7 @@ from django.utils.importlib import import_module
 from elasticsearch import Elasticsearch, ElasticsearchException
 
 from . import settings as es_settings
+from .signals import post_indices_create, post_indices_rebuild
 
 
 _elasticsearch_indices = collections.defaultdict(lambda: [])
@@ -71,8 +72,8 @@ def create_indices(es=None, indices=[], set_aliases=True):
     es = es or Elasticsearch(**es_settings.ELASTICSEARCH_CONNECTION_PARAMS)
 
     result = []
-
     aliases = []
+
     now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     for index_alias, type_classes in get_indices(indices).items():
         index_settings = es_settings.ELASTICSEARCH_DEFAULT_INDEX_SETTINGS
@@ -105,6 +106,9 @@ def create_indices(es=None, indices=[], set_aliases=True):
 
     if set_aliases:
         create_aliases(es, aliases)
+
+    # `aliases` is a list of (index alias, index timestamped-name) tuples
+    post_indices_create.send(None, indices=aliases, aliases_set=set_aliases)
 
     return result, aliases
 
@@ -162,6 +166,9 @@ def rebuild_indices(es=None, indices=[], set_aliases=True):
 
     if set_aliases:
         create_aliases(es, aliases)
+
+    # `aliases` is a list of (index alias, index timestamped-name) tuples
+    post_indices_rebuild.send(None, indices=aliases, aliases_set=set_aliases)
 
     return created_indices, aliases
 
