@@ -135,6 +135,6 @@ Awesome - Django's magic is applied.
 TODO:
 
 * add examples for more complex data situations
-* add examples of using `ElasticsearchForm` to derive your own search forms
+* add examples of using :code:`ElasticsearchForm` to derive your own search forms
 * add examples of using :code:`es_manage` management command options
-* add examples/scenarios when to use `post_indices_create` and `post_indices_rebuild` signals (ie. adding percolators to new indices)
+* add examples/scenarios when to use :code:`post_indices_create` and :code:`post_indices_rebuild` signals (ie. adding percolators to new indices)

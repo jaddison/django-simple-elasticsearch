@@ -43,6 +43,7 @@ Features
  * base search form class to handle input validation, query preparation and response handling
  * multi-search processor class to batch multiple Elasticsearch queries via :code:`_msearch`
  * 'get' shortcut functions
+* post index create/rebuild signals available to perform actions after certain stages (ie. add your own percolators)
 
 Installation
 ------------
