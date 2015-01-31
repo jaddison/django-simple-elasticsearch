@@ -3,6 +3,11 @@
 History
 -------
 
+0.9.15 (2015-01-31)
+---------------------
+
+* BUGFIX: Merging pull request from @key that addresses Python 3 support (management command now works).
+
 0.9.14 (2015-01-31)
 ---------------------
 
@@ -12,7 +17,6 @@ History
 ---------------------
 
 * Added in new `post_indices_create` and `post_indices_rebuild` signals to allow users to run actions at various points during the index creation and bulk indexing processes.
-
 
 0.9.12 (2014-12-17)
 ---------------------
