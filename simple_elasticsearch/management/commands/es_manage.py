@@ -5,6 +5,11 @@ from django.core.management.base import BaseCommand, CommandError
 
 from ...utils import get_indices, create_indices, rebuild_indices
 
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
 
 class Unbuffered(object):
     def __init__(self, stream):
