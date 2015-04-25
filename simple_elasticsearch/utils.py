@@ -4,12 +4,15 @@ import gc
 import sys
 from django.conf import settings
 from django.http import Http404
-from django.utils.importlib import import_module
 from elasticsearch import Elasticsearch, ElasticsearchException
 
 from . import settings as es_settings
 from .signals import post_indices_create, post_indices_rebuild
 
+try:
+    from importlib import import_module
+except ImportError:
+    from django.utils.importlib import import_module
 
 _elasticsearch_indices = collections.defaultdict(lambda: [])
 
