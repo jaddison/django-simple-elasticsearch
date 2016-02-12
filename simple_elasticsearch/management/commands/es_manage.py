@@ -1,5 +1,4 @@
 import sys
-from optparse import make_option
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
@@ -28,45 +27,14 @@ class ESCommandError(CommandError):
 
 class Command(BaseCommand):
     help = ''
-    option_list = BaseCommand.option_list + (
-        make_option(
-            '--list',
-            action='store_true',
-            dest='list',
-            default=False
-        ),
-        make_option(
-            '--initialize',
-            action='store_true',
-            dest='initialize',
-            default=False
-        ),
-        make_option(
-            '--rebuild',
-            action='store_true',
-            dest='rebuild',
-            default=False
-        ),
-        make_option(
-            '--cleanup',
-            action='store_true',
-            dest='cleanup',
-            default=False
-        ),
-        make_option(
-            '--no_input',
-            '--noinput',
-            action='store_true',
-            dest='no_input',
-            default=False
-        ),
-        make_option(
-            '--indexes',
-            action='store',
-            dest='indexes',
-            default=''
-        )
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument('--list', action='store_true', dest='list', default=False)
+        parser.add_argument('--initialize', action='store_true', dest='initialize', default=False)
+        parser.add_argument('--rebuild', action='store_true', dest='rebuild', default=False)
+        parser.add_argument('--cleanup', action='store_true', dest='cleanup', default=False)
+        parser.add_argument('--no_input', '--noinput', action='store_true', dest='no_input', default=False)
+        parser.add_argument('--indexes', action='store', dest='indexes', default='')
 
     def handle(self, *args, **options):
         no_input = options.get('no_input')

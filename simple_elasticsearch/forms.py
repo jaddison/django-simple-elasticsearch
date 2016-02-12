@@ -1,21 +1,18 @@
-from django import forms
-from django.core.paginator import Paginator, Page
+from django.core.paginator import Paginator as DjangoPaginator, Page
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Search
-from elasticsearch_dsl.result import Response
-from elasticsearch_dsl.utils import AttrDict
 
 from . import settings as es_settings
 
 
-class DSEPaginator(Paginator):
+class Paginator(DjangoPaginator):
     """
     Override Django's built-in Paginator class to take in a count/total number of items;
     Elasticsearch provides the total as a part of the query results, so we can minimize hits.
     """
-    def __init__(self, *args, **kwargs):
-        super(DSEPaginator, self).__init__(*args, **kwargs)
-        self._count = self.object_list.hits.total
+    def __init__(self, response, *args, **kwargs):
+        c = response.total
+        super(Paginator, self).__init__(response.results, *args, **kwargs)
+        self._count = c
 
     def page(self, number):
         # this is overridden to prevent any slicing of the object_list - Elasticsearch has
@@ -24,59 +21,46 @@ class DSEPaginator(Paginator):
         return Page(self.object_list, number, self)
 
 
-class DSEResponse(Response):
-    def __init__(self, d, page=None, page_size=None):
-        super(DSEResponse, self).__init__(d)
+class Response(object):
+    def __init__(self, d, page_num, page_size):
+        self._page_num = page_num
+        self._page_size = page_size
 
-        # __setattr__ is overridden in parent class; assign these values
-        # manually to prevent the new __setattr__ from firing
-        super(AttrDict, self).__setattr__('_page_num', page)
-        super(AttrDict, self).__setattr__('_page_size', page_size)
+        self.response_meta = d
+        self.results_meta = d.pop('hits', {})
+        self._results = self.results_meta.pop('hits', [])
 
     def __len__(self):
-        return len(self.hits)
+        return len(self._results)
+
+    @property
+    def total(self):
+        return self.results_meta.get('total', 0)
+
+    @property
+    def results(self):
+        for item in self._results:
+            yield Result(item)
+
+    @property
+    def max_score(self):
+        return self.results_meta.get('max_score', 0)
 
     @property
     def page(self):
         if not hasattr(self, '_page'):
-            paginator = DSEPaginator(self, self._page_size)
-            # avoid assigning _page into self._d_
-            super(AttrDict, self).__setattr__('_page', paginator.page(self._page_num))
+            paginator = Paginator(self, self._page_size)
+            self._page = paginator.page(self._page_num)
         return self._page
 
 
-class ElasticsearchForm(forms.Form):
-
-    def __init__(self, *args, **kwargs):
-        self.query_params = kwargs.pop('query_params', {}).copy()
-        self.es = kwargs.pop('es', None)
-
-        super(ElasticsearchForm, self).__init__(*args, **kwargs)
-
-    def get_index(self):
-        # return the ES index name (or multiple comma-separated) you want to
-        # target, or '' if you don't want to target an index
-        return ''
-
-    def get_type(self):
-        # return the ES type name (or multiple comma-separated) you want to
-        # target, or '' if you don't want to target a type
-        return ''
-
-    def prepare_query(self):
-        raise NotImplementedError
-
-    def search(self, page=1, page_size=20):
-        esp = ElasticsearchProcessor(self.es)
-        esp.add_search(self, page, page_size)
-        responses = esp.search()
-
-        # there will only be a single response from a ElasticsearchForm
-        return responses[0]
+class Result(object):
+    def __init__(self, data):
+        self.result_meta = data
+        self.data = self.result_meta.pop('_source', {})
 
 
-class ElasticsearchProcessor(object):
-
+class SimpleSearch(object):
     def __init__(self, es=None):
         self.es = es or Elasticsearch(es_settings.ELASTICSEARCH_SERVER)
         self.bulk_search_data = []
@@ -86,42 +70,11 @@ class ElasticsearchProcessor(object):
         self.bulk_search_data = []
         self.page_ranges = []
 
-    def add_search(self, query, page=1, page_size=20, index='', doc_type='', query_params={}):
-        if isinstance(query, ElasticsearchForm):
-            form = query
-            index = index or form.get_index()
-            doc_type = doc_type or form.get_type()
+    def add_search(self, query, page=1, page_size=20, index='', doc_type='', query_params=None):
+        query_params = query_params if query_params is not None else {}
 
-            qp = form.query_params.copy()
-            qp.update(query_params)
-            query_params = qp
-
-            query = form.prepare_query()
-        elif isinstance(query, Search):
-            dsl_search = query
-            index = index or dsl_search._index
-            doc_type = doc_type or dsl_search._doc_type
-
-            qp = dsl_search._params.copy()
-            qp.update(query_params)
-            query_params = qp
-
-            query = dsl_search.to_dict()
-        elif isinstance(query, dict):
-            pass
-        else:
-            # we don't support any other type of object
-            return
-
-        try:
-            page = int(page)
-        except ValueError:
-            page = 1
-
-        try:
-            page_size = int(page_size)
-        except ValueError:
-            page_size = 20
+        page = int(page)
+        page_size = int(page_size)
 
         query['from'] = (page - 1) * page_size
         query['size'] = page_size
@@ -143,9 +96,8 @@ class ElasticsearchProcessor(object):
 
         if self.bulk_search_data:
             data = self.es.msearch(self.bulk_search_data)
-            if data:
-                for i, tmp in enumerate(data.get('responses', [])):
-                    responses.append(DSEResponse(tmp, *self.page_ranges[i]))
+            for i, tmp in enumerate((data or {}).get('responses', [])):
+                responses.append(Response(tmp, *self.page_ranges[i]))
 
         self.reset()
 

@@ -136,7 +136,6 @@ def rebuild_indices(es=None, indices=[], set_aliases=True):
             settings = {
                 'number_of_replicas': current_index_settings.get('index', {}).get('number_of_replicas', 1),
                 'refresh_interval': current_index_settings.get('index', {}).get('refresh_interval', '1s'),
-                'merge.policy.merge_factor': current_index_settings.get('index', {}).get('merge.policy.merge_factor', 10)
             }
             es.indices.put_settings({'index': settings}, current_index_name)
             es.indices.refresh(current_index_name)
@@ -153,7 +152,6 @@ def rebuild_indices(es=None, indices=[], set_aliases=True):
             es.indices.put_settings({'index': {
                 'number_of_replicas': 0,
                 'refresh_interval': '-1',
-                'merge.policy.merge_factor': 30
             }}, index=index_name)
 
         try:
