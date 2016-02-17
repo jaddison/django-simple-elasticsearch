@@ -29,6 +29,7 @@ class Response(object):
         self.response_meta = d
         self.results_meta = d.pop('hits', {})
         self._results = self.results_meta.pop('hits', [])
+        self.aggregations = self.response_meta.pop('aggregations', {})
 
     def __len__(self):
         return len(self._results)
