@@ -5,13 +5,13 @@ if getattr(settings, 'IS_TEST', False):
     from django.db import models
     from django.db.models.signals import post_save, pre_delete
 
-    from .mixins import ElasticsearchIndexMixin
+    from .mixins import ElasticsearchTypeMixin
 
     class Blog(models.Model):
         name = models.CharField(max_length=50)
         description = models.TextField()
 
-    class BlogPost(models.Model, ElasticsearchIndexMixin):
+    class BlogPost(models.Model, ElasticsearchTypeMixin):
         blog = models.ForeignKey(Blog)
         slug = models.SlugField()
         title = models.CharField(max_length=50)

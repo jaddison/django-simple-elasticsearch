@@ -1,13 +1,9 @@
 import copy
 from datadiff import tools as ddtools
-from django import forms
 from django.core.paginator import Page
 from django.test import TestCase
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Search
-from elasticsearch_dsl.result import Response
 import mock
-from simple_elasticsearch.forms import ElasticsearchForm, ElasticsearchProcessor
 
 try:
     # `reload` is not a python3 builtin like python2
@@ -16,32 +12,16 @@ except NameError:
     from imp import reload
 
 from . import settings as es_settings
-from .mixins import ElasticsearchIndexMixin
+from .search import SimpleSearch
+from .mixins import ElasticsearchTypeMixin
 from .models import Blog, BlogPost
 
 
-class ElasticsearchIndexMixinClass(ElasticsearchIndexMixin):
+class ElasticsearchTypeMixinClass(ElasticsearchTypeMixin):
     pass
 
 
-class BlogPostSearchForm(ElasticsearchForm):
-    q = forms.CharField()
-
-    def get_index(self):
-        return 'blog'
-
-    def get_type(self):
-        return 'posts'
-
-    def prepare_query(self):
-        return {
-            "query": {
-                "match_all": {}
-            }
-        }
-
-
-class ElasticsearchIndexMixinTestCase(TestCase):
+class ElasticsearchTypeMixinTestCase(TestCase):
 
     @property
     def latest_post(self):
@@ -84,7 +64,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
     def test__get_es__with_custom_server(self):
         # include a custom class here as the internal `_es` is cached, so can't reuse the
         # `ElasticsearchIndexClassDefaults` global class (see above).
-        class ElasticsearchIndexClassCustomSettings(ElasticsearchIndexMixin):
+        class ElasticsearchIndexClassCustomSettings(ElasticsearchTypeMixin):
             pass
 
         with self.settings(ELASTICSEARCH_SERVER=['search.example.com:9201']):
@@ -99,7 +79,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
     def test__get_es__with_custom_connection_settings(self):
         # include a custom class here as the internal `_es` is cached, so can't reuse the
         # `ElasticsearchIndexClassDefaults` global class (see above).
-        class ElasticsearchIndexClassCustomSettings(ElasticsearchIndexMixin):
+        class ElasticsearchIndexClassCustomSettings(ElasticsearchTypeMixin):
             pass
 
         with self.settings(ELASTICSEARCH_CONNECTION_PARAMS={'hosts': ['search2.example.com:9202'], 'sniffer_timeout': 15}):
@@ -111,7 +91,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
             self.assertEqual(result.transport.sniffer_timeout, 15)
         reload(es_settings)
 
-    @mock.patch('simple_elasticsearch.mixins.ElasticsearchIndexMixin.index_add_or_delete')
+    @mock.patch('simple_elasticsearch.mixins.ElasticsearchTypeMixin.index_add_or_delete')
     def test__save_handler(self, mock_index_add_or_delete):
         # with a create call
         post = BlogPost.objects.create(
@@ -127,7 +107,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         post.save()
         mock_index_add_or_delete.assert_called_with(post)
 
-    @mock.patch('simple_elasticsearch.mixins.ElasticsearchIndexMixin.index_delete')
+    @mock.patch('simple_elasticsearch.mixins.ElasticsearchTypeMixin.index_delete')
     def test__delete_handler(self, mock_index_delete):
         post = self.latest_post
         post.delete()
@@ -183,8 +163,8 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         self.assertTrue(result)
         mock_delete.assert_called_with('foo', 'posts', post.pk, routing=1)
 
-    @mock.patch('simple_elasticsearch.mixins.ElasticsearchIndexMixin.index_add')
-    @mock.patch('simple_elasticsearch.mixins.ElasticsearchIndexMixin.index_delete')
+    @mock.patch('simple_elasticsearch.mixins.ElasticsearchTypeMixin.index_add')
+    @mock.patch('simple_elasticsearch.mixins.ElasticsearchTypeMixin.index_delete')
     def test__index_add_or_delete(self, mock_index_delete, mock_index_add):
         # invalid object passed in, should return False
         result = BlogPost.index_add_or_delete(None)
@@ -228,15 +208,15 @@ class ElasticsearchIndexMixinTestCase(TestCase):
 
     def test__get_index_name_notimplemented(self):
         with self.assertRaises(NotImplementedError):
-            ElasticsearchIndexMixinClass.get_index_name()
+            ElasticsearchTypeMixinClass.get_index_name()
 
     def test__get_type_name_notimplemented(self):
         with self.assertRaises(NotImplementedError):
-            ElasticsearchIndexMixinClass.get_type_name()
+            ElasticsearchTypeMixinClass.get_type_name()
 
     def test__get_queryset_notimplemented(self):
         with self.assertRaises(NotImplementedError):
-            ElasticsearchIndexMixinClass.get_queryset()
+            ElasticsearchTypeMixinClass.get_queryset()
 
     def test__get_type_mapping(self):
         mapping = {
@@ -272,7 +252,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         self.assertEqual(BlogPost.get_type_mapping(), mapping)
 
     def test__get_type_mapping_notimplemented(self):
-        self.assertEqual(ElasticsearchIndexMixinClass.get_type_mapping(), {})
+        self.assertEqual(ElasticsearchTypeMixinClass.get_type_mapping(), {})
 
     def test__get_request_params(self):
         post = self.latest_post
@@ -280,7 +260,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         self.assertEqual(BlogPost.get_request_params(post), {'routing':1})
 
     def test__get_request_params_notimplemented(self):
-        self.assertEqual(ElasticsearchIndexMixinClass.get_request_params(1), {})
+        self.assertEqual(ElasticsearchTypeMixinClass.get_request_params(1), {})
 
     def test__get_bulk_index_limit(self):
         self.assertTrue(str(BlogPost.get_bulk_index_limit()).isdigit())
@@ -310,7 +290,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
 
     def test__get_document_notimplemented(self):
         with self.assertRaises(NotImplementedError):
-            ElasticsearchIndexMixinClass.get_document(1)
+            ElasticsearchTypeMixinClass.get_document(1)
 
     @mock.patch('simple_elasticsearch.mixins.Elasticsearch.index')
     def test__should_index(self, mock_index):
@@ -322,7 +302,7 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         self.assertFalse(BlogPost.should_index(post))
 
     def test__should_index_notimplemented(self):
-        self.assertTrue(ElasticsearchIndexMixinClass.should_index(1))
+        self.assertTrue(ElasticsearchTypeMixinClass.should_index(1))
 
     @mock.patch('simple_elasticsearch.mixins.queryset_iterator')
     def test__bulk_index_queryset(self, mock_queryset_iterator):
@@ -368,93 +348,24 @@ class ElasticsearchIndexMixinTestCase(TestCase):
         self.assertTrue(mock_bulk.call_count == bulk_times)
 
 
-class ESSearchFormTestCase(TestCase):
+class SimpleSearchTestCase(TestCase):
 
     def setUp(self):
         self.query = {'q': 'python'}
-        self.form = BlogPostSearchForm(self.query)
-        self.form.is_valid()
-
-    def test__form_get_index(self):
-        self.assertEqual(self.form.get_index(), 'blog')
-
-    def test__form_get_type(self):
-        self.assertEqual(self.form.get_type(), 'posts')
-
-    def test__form_query_params(self):
-        self.assertEqual(self.form.query_params, {})
-
-        query_params = {'test': 'foo'}
-        form = BlogPostSearchForm(query_params=query_params)
-        self.assertEqual(form.query_params, query_params)
-
-    @mock.patch('simple_elasticsearch.forms.ElasticsearchProcessor.search')
-    @mock.patch('simple_elasticsearch.forms.ElasticsearchProcessor.add_search')
-    @mock.patch('simple_elasticsearch.forms.ElasticsearchProcessor.__init__')
-    def test__form_es(self, mock_esp_init, mock_esp_add_search, mock_esp_search):
-        # __init__ methods always return None
-        mock_esp_init.return_value = None
-
-        # this allows the form.search() method to complete without
-        # exceptions being raised
-        mock_esp_search.return_value = [Response({})]
-
-        # by default, the form has no internal Elasticsearch object
-        self.assertEqual(self.form.es, None)
-
-        # on search(), ElasticsearchProcessor() should be initialized with
-        # a None Elasticsearch object (the form's)
-        self.form.search()
-        mock_esp_init.assert_called_with(None)
-        mock_esp_init.reset()
-
-        # here, we're setting the form's internal Elasticsearch
-        # object, so the above tests should have the opposite
-        # result
-        form = BlogPostSearchForm(es=Elasticsearch(['127.0.0.2:9201']))
-        self.assertIsInstance(form.es, Elasticsearch)
-        self.assertEqual(form.es.transport.hosts[0]['host'], '127.0.0.2')
-        self.assertEqual(form.es.transport.hosts[0]['port'], 9201)
-
-        form.search()
-        mock_esp_init.assert_called_with(form.es)
-
-    def test__form_data_validation(self):
-        form = BlogPostSearchForm({})
-        self.assertFalse(form.is_valid())
-
-        form = BlogPostSearchForm({'q': ''})
-        self.assertFalse(form.is_valid())
-
-        form = BlogPostSearchForm({'q': 'foo'})
-        self.assertTrue(form.is_valid())
-
-    @mock.patch('simple_elasticsearch.forms.ElasticsearchProcessor.search')
-    @mock.patch('simple_elasticsearch.forms.ElasticsearchProcessor.add_search')
-    def test__form_search(self, mock_esp_add_search, mock_esp_search):
-        mock_esp_search.return_value = [Response({})]
-        self.form.search()
-        mock_esp_add_search.assert_called_with(self.form, 1, 20)
-        mock_esp_add_search.reset()
-
-        self.form.search(5, 50)
-        mock_esp_add_search.assert_called_with(self.form, 5, 50)
-
-
-class ESSearchProcessorTestCase(TestCase):
-
-    def setUp(self):
-        self.query = {'q': 'python'}
-        self.form = BlogPostSearchForm(self.query)
-        self.form.is_valid()
 
     def test__esp_reset(self):
-        esp = ElasticsearchProcessor()
+        esp = SimpleSearch()
 
         self.assertTrue(len(esp.bulk_search_data) == 0)
         self.assertTrue(len(esp.page_ranges) == 0)
 
-        esp.add_search(self.form)
+        esp.add_search({
+            "query": {
+                "match": {
+                    "_all": "foobar"
+                }
+            }
+        })
 
         self.assertFalse(len(esp.bulk_search_data) == 0)
         self.assertFalse(len(esp.page_ranges) == 0)
@@ -465,7 +376,7 @@ class ESSearchProcessorTestCase(TestCase):
         self.assertTrue(len(esp.page_ranges) == 0)
 
     def test__esp_add_query_dict(self):
-        esp = ElasticsearchProcessor()
+        esp = SimpleSearch()
 
         page = 1
         page_size = 20
@@ -478,7 +389,7 @@ class ESSearchProcessorTestCase(TestCase):
             }
         }
 
-        # ElasticsearchProcessor internally sets the from/size parameters
+        # SimpleSearch internally sets the from/size parameters
         # on the query; we need to compare with those values included
         query_with_size = query.copy()
         query_with_size.update({
@@ -500,78 +411,7 @@ class ESSearchProcessorTestCase(TestCase):
         ddtools.assert_equal(esp.bulk_search_data[0], {'index': 'blog', 'type': 'posts'})
         ddtools.assert_equal(esp.bulk_search_data[1], query_with_size)
 
-    def test__esp_add_query_form(self):
-        esp = ElasticsearchProcessor()
-
-        page = 1
-        page_size = 20
-
-        query = self.form.prepare_query()
-
-        # ElasticsearchProcessor internally sets the from/size parameters
-        # on the query; we need to compare with those values included
-        query_with_size = query.copy()
-        query_with_size.update({
-            'from': (page - 1) * page_size,
-            'size': page_size
-        })
-
-        esp.add_search(self.form)
-        ddtools.assert_equal(esp.bulk_search_data[0], {'index': 'blog', 'type': 'posts'})
-        ddtools.assert_equal(esp.bulk_search_data[1], query_with_size)
-
-    def test__esp_add_query_dslquery(self):
-        page = 1
-        page_size = 20
-
-        query = {
-            "query": {
-                "match": {
-                    "_all": "foobar"
-                }
-            }
-        }
-
-        s = Search.from_dict(query.copy())
-
-        # ElasticsearchProcessor internally sets the from/size parameters
-        # on the query; we need to compare with those values included
-        query_with_size = query.copy()
-        query_with_size.update({
-            'from': (page - 1) * page_size,
-            'size': page_size
-        })
-
-        esp = ElasticsearchProcessor()
-        esp.add_search(s)
-        ddtools.assert_equal(esp.bulk_search_data[0], {})
-        ddtools.assert_equal(esp.bulk_search_data[1], query_with_size)
-
-        esp.reset()
-        esp.add_search(s, index='blog')
-        ddtools.assert_equal(esp.bulk_search_data[0], {'index': 'blog'})
-        ddtools.assert_equal(esp.bulk_search_data[1], query_with_size)
-
-        esp.reset()
-        esp.add_search(s, index='blog', doc_type='posts')
-        ddtools.assert_equal(esp.bulk_search_data[0], {'index': 'blog', 'type': 'posts'})
-        ddtools.assert_equal(esp.bulk_search_data[1], query_with_size)
-
-        s = s.index('blog').params(routing='id')
-
-        esp.reset()
-        esp.add_search(s)
-        ddtools.assert_equal(esp.bulk_search_data[0], {'index': ['blog'], 'routing': 'id'})
-        ddtools.assert_equal(esp.bulk_search_data[1], query_with_size)
-
-        s = s.doc_type('posts')
-
-        esp.reset()
-        esp.add_search(s)
-        ddtools.assert_equal(esp.bulk_search_data[0], {'index': ['blog'], 'type': ['posts'], 'routing': 'id'})
-        ddtools.assert_equal(esp.bulk_search_data[1], query_with_size)
-
-    @mock.patch('simple_elasticsearch.forms.Elasticsearch.msearch')
+    @mock.patch('simple_elasticsearch.search.Elasticsearch.msearch')
     def test__esp_search(self, mock_msearch):
         mock_msearch.return_value = {
             "responses": [
@@ -598,7 +438,7 @@ class ESSearchProcessorTestCase(TestCase):
             ]
         }
 
-        esp = ElasticsearchProcessor()
+        esp = SimpleSearch()
         esp.add_search({}, 3, 2, index='blog', doc_type='posts')
 
         bulk_data = copy.deepcopy(esp.bulk_search_data)
@@ -620,9 +460,36 @@ class ESSearchProcessorTestCase(TestCase):
         self.assertEqual(page.number, 3)
         self.assertTrue(page.has_next())
         self.assertTrue(page.has_previous())
-        self.assertEqual(len(page), 2)  # 2 items on the page
+        self.assertEqual(len(list(page)), 2)  # 2 items on the page
 
-        mock_msearch.reset()
+    @mock.patch('simple_elasticsearch.search.Elasticsearch.msearch')
+    def test__esp_search2(self, mock_msearch):
+        mock_msearch.return_value = {
+            "responses": [
+                {
+                    "hits": {
+                        "total": 20,
+                        "hits": [
+                            {
+                                "_index": "blog",
+                                "_type": "posts",
+                                "_id": "1",
+                                "_score": 1.0,
+                                "_source": {"account_number": 1,}
+                            }, {
+                                "_index": "blog",
+                                "_type": "posts",
+                                "_id": "6",
+                                "_score": 1.0,
+                                "_source": {"account_number": 6,}
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+
+        esp = SimpleSearch()
         esp.add_search({}, 1, 2, index='blog', doc_type='posts')
         responses = esp.search()
         page = responses[0].page

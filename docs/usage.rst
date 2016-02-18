@@ -2,15 +2,15 @@ Usage
 =====
 
 For a minimal investment of time, Django Simple Elasticsearch offers a number of perks. Implementing a class
-with the :code:`ElasticsearchIndexMixin` lets you:
+with the :code:`ElasticsearchTypeMixin` lets you:
 
 * initialize your Elasticsearch indices and mappings via the included :code:`es_manage` management command
 * perform Elasticsearch bulk indexing via the same :code:`es_manage` management command
 * perform Elasticsearch bulk indexing as well as individual index/delete requests on demand in your code
-* connect the available :code:`ElasticsearchIndexMixin` save and delete handlers to Django's available
+* connect the available :code:`ElasticsearchTypeMixin` save and delete handlers to Django's available
   model signals (ie :code:`post_save`, :code:`post_delete`)
 
-Let's look at an example implementation of :code:`ElasticsearchIndexMixin`. Here's a couple of blog-related Models
+Let's look at an example implementation of :code:`ElasticsearchTypeMixin`. Here's a couple of blog-related Models
 in a :code:`models.py` file:
 
 .. code-block:: python
@@ -27,7 +27,7 @@ in a :code:`models.py` file:
         created_at = models.DateTimeField(auto_now_add=True)
 
 To start with :code:`simple_elasticsearch`, you'll need to tell it that the :code:`BlogPost` class implements the
-:code:`ElasticsearchIndexMixin` mixin, so in your :code:`settings.py` set the :code:`ELASTICSEARCH_TYPE_CLASSES` setting:
+:code:`ElasticsearchTypeMixin` mixin, so in your :code:`settings.py` set the :code:`ELASTICSEARCH_TYPE_CLASSES` setting:
 
 .. code-block:: python
 
@@ -37,18 +37,18 @@ To start with :code:`simple_elasticsearch`, you'll need to tell it that the :cod
 
 If you do not add this setting, everything will still work except for the :code:`es_manage` command - it won't know
 what indices to create, type mappings to set or what objects to index. As you add additional
-:code:`ElasticsearchIndexMixin`-based index handlers, add them to this list.
+:code:`ElasticsearchTypeMixin`-based index handlers, add them to this list.
 
-All right, let's add in :code:`ElasticsearchIndexMixin` to the :code:`BlogPost` model. Only pertinent changes from the
+All right, let's add in :code:`ElasticsearchTypeMixin` to the :code:`BlogPost` model. Only pertinent changes from the
 above :code:`models.py` are shown:
 
 .. code-block:: python
 
-    from simple_elasticsearch.mixins import ElasticsearchIndexMixin
+    from simple_elasticsearch.mixins import ElasticsearchTypeMixin
 
     ...
 
-    class BlogPost(models.Model, ElasticsearchIndexMixin):
+    class BlogPost(models.Model, ElasticsearchTypeMixin):
         blog = models.ForeignKey(Blog)
         slug = models.SlugField()
         title = models.CharField(max_length=50)
@@ -119,7 +119,7 @@ items. Note that there are additional :code:`@classmethods` you can override to 
 have been provided for these - see the source for details.
 
 Of course, our :code:`BlogPost` implementation doesn't ensure that your Elasticsearch index is updated every time you
-save or delete - for this, you can use the :code:`ElasticsearchIndexMixin` built-in save and delete handlers.
+save or delete - for this, you can use the :code:`ElasticsearchTypeMixin` built-in save and delete handlers.
 
 .. code-block:: python
 
@@ -135,6 +135,5 @@ Awesome - Django's magic is applied.
 TODO:
 
 * add examples for more complex data situations
-* add examples of using :code:`ElasticsearchForm` to derive your own search forms
 * add examples of using :code:`es_manage` management command options
 * add examples/scenarios when to use :code:`post_indices_create` and :code:`post_indices_rebuild` signals (ie. adding percolators to new indices)

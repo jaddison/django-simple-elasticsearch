@@ -1,24 +1,21 @@
-from django.core.paginator import Paginator as DjangoPaginator, Page
+from django.core.paginator import Paginator as DjangoPaginator
 from elasticsearch import Elasticsearch
 
 from . import settings as es_settings
 
 
 class Paginator(DjangoPaginator):
-    """
-    Override Django's built-in Paginator class to take in a count/total number of items;
-    Elasticsearch provides the total as a part of the query results, so we can minimize hits.
-    """
     def __init__(self, response, *args, **kwargs):
-        c = response.total
+        # Override to set the count/total number of items; Elasticsearch provides the total
+        # as a part of the query results, so we can minimize hits.
         super(Paginator, self).__init__(response.results, *args, **kwargs)
-        self._count = c
+        self._count = response.total
 
     def page(self, number):
         # this is overridden to prevent any slicing of the object_list - Elasticsearch has
         # returned the sliced data already.
         number = self.validate_number(number)
-        return Page(self.object_list, number, self)
+        return self._get_page(self.object_list, number, self)
 
 
 class Response(object):

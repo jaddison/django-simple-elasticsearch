@@ -3,6 +3,17 @@
 History
 -------
 
+2.0.0 (2016-12-20)
+---------------------
+
+* ALERT: this is a backwards incompatible release
+* Removed support for Django versions older than 1.8. The goal going forward will be to only support Django versions that the Django core team lists as supported.
+* Removed elasticsearch-dsl support: responses and results are now represented by simpler internal representations; queries can ONLY be done via a `dict` form.
+* Removed `ElasticsearchForm` - it is easy enough to build a form to validate search input and then form a query `dict` manually.
+* Renamed `ElasticsearchIndexMixin` to `ElasticsearchTypeMixin`, seeing as the mixin represented an ES type mapping, not an actual index.
+* Renamed `ElasticsearchProcessor` to `SimpleSearch`.
+* Overall, this module has been greatly simplified.
+
 1.0.0 (2016-12-20)
 ---------------------
 

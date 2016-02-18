@@ -5,7 +5,7 @@ from .exceptions import MissingObjectError
 from .utils import queryset_iterator
 
 
-class ElasticsearchType(object):
+class ElasticsearchTypeMixin(object):
 
     @classmethod
     def get_es(cls):
@@ -139,7 +139,3 @@ class ElasticsearchType(object):
     @classmethod
     def delete_handler(cls, sender, instance, **kwargs):
         cls.index_delete(instance)
-
-
-# carryover from previous naming misconception
-ElasticsearchIndexMixin = ElasticsearchType
