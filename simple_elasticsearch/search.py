@@ -1,7 +1,24 @@
-from django.core.paginator import Paginator as DjangoPaginator
+from django.core.paginator import (
+    Paginator as DjangoPaginator,
+    Page as DjangoPage
+)
 from elasticsearch import Elasticsearch
 
 from . import settings as es_settings
+
+
+class Page(DjangoPage):
+    """
+    This class is overridden to allow the `results` generator to
+    only be evaluated once; if we didn't do this, we'd have to
+    force it to a list in order for len(object_list) to work.
+    """
+    def __init__(self, page_size, *args, **kwargs):
+        super(Page, self).__init__(*args, **kwargs)
+        self._page_size = page_size
+
+    def __len__(self):
+        return self._page_size
 
 
 class Paginator(DjangoPaginator):
@@ -10,12 +27,22 @@ class Paginator(DjangoPaginator):
         # as a part of the query results, so we can minimize hits.
         super(Paginator, self).__init__(response.results, *args, **kwargs)
         self._count = response.total
+        self.__page_size = len(response)
 
     def page(self, number):
         # this is overridden to prevent any slicing of the object_list - Elasticsearch has
         # returned the sliced data already.
         number = self.validate_number(number)
         return self._get_page(self.object_list, number, self)
+
+    def _get_page(self, *args, **kwargs):
+        """
+        Returns an instance of a single page.
+
+        This hook can be used by subclasses to use an alternative to the
+        standard :cls:`Page` object.
+        """
+        return Page(self.__page_size, *args, **kwargs)
 
 
 class Response(object):
