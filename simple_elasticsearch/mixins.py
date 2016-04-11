@@ -72,6 +72,15 @@ class ElasticsearchTypeMixin(object):
         for i, obj in enumerate(queryset_iterator(queryset, cls.get_query_limit())):
             delete = not cls.should_index(obj)
 
+            doc = {}
+            if not delete:
+                # allow for the case where a document cannot be indexed;
+                # the implementation of `get_document()` should return a
+                # falsy value.
+                doc = cls.get_document(obj)
+                if not doc:
+                    continue
+
             data = {
                 '_index': index_name or cls.get_index_name(),
                 '_type': cls.get_type_name(),
@@ -85,7 +94,7 @@ class ElasticsearchTypeMixin(object):
 
             # only append bulk operation data if it's not a delete operation
             if not delete:
-                tmp.append(cls.get_document(obj))
+                tmp.append(doc)
 
             if not i % cls.get_bulk_index_limit():
                 es.bulk(tmp)
@@ -97,10 +106,14 @@ class ElasticsearchTypeMixin(object):
     @classmethod
     def index_add(cls, obj, index_name=''):
         if obj and cls.should_index(obj):
+            doc = cls.get_document(obj)
+            if not doc:
+                return False
+
             cls.get_es().index(
                 index_name or cls.get_index_name(),
                 cls.get_type_name(),
-                cls.get_document(obj),
+                doc,
                 cls.get_document_id(obj),
                 **cls.get_request_params(obj)
             )
