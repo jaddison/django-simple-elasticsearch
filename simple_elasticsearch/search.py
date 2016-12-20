@@ -25,7 +25,7 @@ class Paginator(DjangoPaginator):
     def __init__(self, response, *args, **kwargs):
         # Override to set the count/total number of items; Elasticsearch provides the total
         # as a part of the query results, so we can minimize hits.
-        super(Paginator, self).__init__(response.results, *args, **kwargs)
+        super(Paginator, self).__init__(list(response.results), *args, **kwargs)
         self._count = response.total
         self.__page_size = len(response)
 

@@ -68,6 +68,8 @@ class ElasticsearchTypeMixin(object):
         if queryset is None:
             queryset = cls.get_queryset()
 
+        bulk_limit = cls.get_bulk_index_limit()
+
         # this requires that `get_queryset` is implemented
         for i, obj in enumerate(queryset_iterator(queryset, cls.get_query_limit())):
             delete = not cls.should_index(obj)
@@ -96,7 +98,7 @@ class ElasticsearchTypeMixin(object):
             if not delete:
                 tmp.append(doc)
 
-            if not i % cls.get_bulk_index_limit():
+            if not i % bulk_limit:
                 es.bulk(tmp)
                 tmp = []
 

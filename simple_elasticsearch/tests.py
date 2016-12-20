@@ -342,6 +342,13 @@ class ElasticsearchTypeMixinTestCase(TestCase):
         # get_document function will get called one less time due to this.
         self.assertTrue(mock_get_document.call_count == (queryset_count - 1))
 
+    @mock.patch('simple_elasticsearch.mixins.Elasticsearch.bulk')
+    def test__bulk_index_bulk(self, mock_bulk):
+        mock_bulk.return_value = {}
+
+        queryset_count = BlogPost.get_queryset().count()
+        BlogPost.bulk_index()
+
         # figure out how many times es.bulk() should get called in the
         # .bulk_index() method and verify it's the same
         bulk_times = int(queryset_count / BlogPost.get_bulk_index_limit()) + 1
