@@ -1,33 +1,21 @@
-from django.core.paginator import (
-    Paginator as DjangoPaginator,
-    Page as DjangoPage
-)
+from django.core.paginator import Paginator as DjangoPaginator
+from django.utils.functional import cached_property
 from elasticsearch import Elasticsearch
 
 from . import settings as es_settings
 
 
-class Page(DjangoPage):
-    """
-    This class is overridden to allow the `results` generator to
-    only be evaluated once; if we didn't do this, we'd have to
-    force it to a list in order for len(object_list) to work.
-    """
-    def __init__(self, page_size, *args, **kwargs):
-        super(Page, self).__init__(*args, **kwargs)
-        self._page_size = page_size
-
-    def __len__(self):
-        return self._page_size
-
-
 class Paginator(DjangoPaginator):
     def __init__(self, response, *args, **kwargs):
+        # `response.results` is a generator, however `Paginator` was changed in 1.10
+        # to require an object with either a `.count()` method (ie. QuerySet) or able
+        # to call `len()` on the object - forcing the generator to resolve to a list
+        # for this reason.
+        super(Paginator, self).__init__(list(response.results), *args, **kwargs)
+
         # Override to set the count/total number of items; Elasticsearch provides the total
         # as a part of the query results, so we can minimize hits.
-        super(Paginator, self).__init__(list(response.results), *args, **kwargs)
         self._count = response.total
-        self.__page_size = len(response)
 
     def page(self, number):
         # this is overridden to prevent any slicing of the object_list - Elasticsearch has
@@ -35,14 +23,9 @@ class Paginator(DjangoPaginator):
         number = self.validate_number(number)
         return self._get_page(self.object_list, number, self)
 
-    def _get_page(self, *args, **kwargs):
-        """
-        Returns an instance of a single page.
-
-        This hook can be used by subclasses to use an alternative to the
-        standard :cls:`Page` object.
-        """
-        return Page(self.__page_size, *args, **kwargs)
+    @property
+    def count(self):
+        return self._count
 
 
 class Response(object):
@@ -71,12 +54,10 @@ class Response(object):
     def max_score(self):
         return self.results_meta.get('max_score', 0)
 
-    @property
+    @cached_property
     def page(self):
-        if not hasattr(self, '_page'):
-            paginator = Paginator(self, self._page_size)
-            self._page = paginator.page(self._page_num)
-        return self._page
+        paginator = Paginator(self, self._page_size)
+        return paginator.page(self._page_num)
 
 
 class Result(object):
