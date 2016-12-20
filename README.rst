@@ -20,7 +20,7 @@ Django models.
 Versions
 --------
 
-Branch :code:`2.x` is currently the future-facing codebase, which will receive new features. `Documentation <http://django-simple-elasticsearch.readthedocs.io/>`_
+Branch :code:`master` is currently the future-facing codebase (version 2.x), which will receive new features. `Documentation <http://django-simple-elasticsearch.readthedocs.io/>`_
 
 Branch :code:`1.x` is the maintenance branch for the legacy 0.9.x versioned releases. This branch is unlikely to receive new features, but will receive required fixes.  `Documentation <http://django-simple-elasticsearch.readthedocs.io/en/1.x/>`_
 
