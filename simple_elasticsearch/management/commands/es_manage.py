@@ -141,18 +141,5 @@ class Command(BaseCommand):
             sys.stdout.write("complete.\n")
             for alias, index in aliases:
                 print("'{0}' rebuilt and aliased to '{1}'".format(alias, index))
-
-        # TODO: need to offer choice to delete old de-aliased indexes
-        # while user_input != 'y':
-        #     user_input = raw_input('Are you sure you want to rebuild {0} index(es)? [y/N]: '.format('the ' + ', '.join(indexes) if indexes else '**ALL**')).lower()
-        #     if user_input == 'n':
-        #         break
-        #
-        # if user_input == 'y':
-        #     sys.stdout.write("Rebuilding ES indexes: ")
-        #     results, aliases = rebuild_indices(indexes)
-        #     sys.stdout.write("complete.\n")
-        #     for alias, index in aliases:
-        #         print "'{0}' rebuilt and aliased to '{1}'".format(alias, index)
         else:
             print("You chose not to rebuild indices.")

@@ -3,10 +3,14 @@
 History
 -------
 
-0.9.17 (2016-12-20)
+1.0.0 (2016-12-20)
 ---------------------
 
-* Adding cleanup command to remove unaliased indices. Also added ELASTICSEARCH_DELETE_OLD_INDEXES setting to auto-remove after a rebuild.
+* Updated 0.9.x codebase version to 1.0.0.
+* Reversed decision on the deprecation of the 0.9.x codebase - it will be maintained in this new 1.x branch, although new functionality will mostly occur on newer releases.
+* Adding cleanup command to remove unaliased indices.
+* Added ELASTICSEARCH_DELETE_OLD_INDEXES setting to auto-remove after a rebuild.
+* Thanks to Github user @jimjkelly for the index removal inspiration.
 
 0.9.16 (2015-04-24)
 ---------------------

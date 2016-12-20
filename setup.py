@@ -14,7 +14,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
     'elasticsearch>=1.0.0,<2.0.0',
-    'elasticsearch-dsl>=0.0.2'
+    'elasticsearch-dsl<2.0.0'
 ]
 
 test_requirements = [
@@ -57,6 +57,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ],
     test_suite='runtests.runtests',
     tests_require=test_requirements
