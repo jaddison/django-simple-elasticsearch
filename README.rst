@@ -15,6 +15,15 @@ Django Simple Elasticsearch
 This package provides a simple method of creating Elasticsearch indexes for
 Django models.
 
+-----
+
+Versions
+--------
+
+Branch :code:`2.x` is currently the future-facing codebase, which will receive new features. `Documentation <http://django-simple-elasticsearch.readthedocs.io/>`_
+
+Branch :code:`1.x` is the maintenance branch for the legacy 0.9.x versioned releases. This branch is unlikely to receive new features, but will receive required fixes.  `Documentation <http://django-simple-elasticsearch.readthedocs.io/en/1.x/>`_
+
 **Using a version older than 0.9.0? Please be aware that as of v0.9.0, this package
 has changed in a backwards-incompatible manner. Version 0.5 is deprecated and no
 longer maintained.**
