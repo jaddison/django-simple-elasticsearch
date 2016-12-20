@@ -190,7 +190,8 @@ def delete_indices(es=None, indices=[], only_unaliased=True):
         if (not only_unaliased or not aliases.get('aliases')) and index.split('-', 1)[0] in indices:
             indices_to_remove.append(index)
 
-    # es.indices.delete(','.join(indices_to_remove))
+    if indices_to_remove:
+        es.indices.delete(','.join(indices_to_remove))
     return indices_to_remove
 
 
