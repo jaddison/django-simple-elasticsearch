@@ -27,7 +27,7 @@ setup(
     description='Simple ElasticSearch indexing integration for Django.',
     long_description=readme + '\n\n' + history,
     author='James Addison',
-    author_email='code@scottisheyes.com',
+    author_email='addi00+github.com@gmail.com',
     url='https://github.com/jaddison/django-simple-elasticsearch',
     packages=[
         'simple_elasticsearch',

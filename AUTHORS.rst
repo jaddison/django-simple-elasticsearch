@@ -5,7 +5,7 @@ Credits
 Development Lead
 ----------------
 
-* James Addison <code@scottisheyes.com>
+* James Addison <addi00+github.com@gmail.com>
 
 Contributors
 ------------
