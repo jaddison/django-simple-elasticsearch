@@ -3,6 +3,11 @@
 History
 -------
 
+0.9.17 (2016-12-20)
+---------------------
+
+* Adding cleanup command to remove unaliased indices. Also added ELASTICSEARCH_DELETE_OLD_INDEXES setting to auto-remove after a rebuild.
+
 0.9.16 (2015-04-24)
 ---------------------
 

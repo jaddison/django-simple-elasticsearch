@@ -57,3 +57,9 @@ ELASTICSEARCH_DEFAULT_INDEX_SETTINGS = getattr(settings, 'ELASTICSEARCH_DEFAULT_
 #     }
 # }
 ELASTICSEARCH_CUSTOM_INDEX_SETTINGS = getattr(settings, 'ELASTICSEARCH_CUSTOM_INDEX_SETTINGS', {})
+
+# Override this in your project settings, setting it to True, to have
+# old indexes deleted on a full rebuild. Currently a new index is
+# created, and the alias is switched to the new one from the old, leaving
+# old ones on the ES cluster.
+ELASTICSEARCH_DELETE_OLD_INDEXES = getattr(settings, 'ELASTICSEARCH_DELETE_OLD_INDEXES', False)
