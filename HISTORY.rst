@@ -6,7 +6,9 @@ History
 2.0.0 (2016-12-20)
 ---------------------
 
-* **ALERT: this is a backwards incompatible release**; the old 1.x (formerly 0.9.x+) code is maintained on a separate branch for now.
+* **ALERT: this is a backwards incompatible release**; the old `1.x` (formerly `0.9.x`+) code is maintained on a separate branch for now.
+* Added support for Django 1.10.
+* Ported delete/cleanup functionality from `1.x`.
 * Removed support for Django versions older than 1.8. The goal going forward will be to only support Django versions that the Django core team lists as supported.
 * Removed elasticsearch-dsl support: responses and results are now represented by simpler internal representations; queries can ONLY be done via a `dict` form.
 * Removed `ElasticsearchForm` - it is easy enough to build a form to validate search input and then form a query `dict` manually.
