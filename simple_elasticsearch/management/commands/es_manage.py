@@ -3,7 +3,7 @@ from optparse import make_option
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from ...utils import get_indices, create_indices, rebuild_indices
+from ...utils import get_indices, create_indices, rebuild_indices, delete_indices
 
 try:
     raw_input
@@ -48,7 +48,14 @@ class Command(BaseCommand):
             default=False
         ),
         make_option(
+            '--cleanup',
+            action='store_true',
+            dest='cleanup',
+            default=False
+        ),
+        make_option(
             '--no_input',
+            '--noinput',
             action='store_true',
             dest='no_input',
             default=False
@@ -74,6 +81,8 @@ class Command(BaseCommand):
             self.subcommand_initialize(requested_indexes, no_input)
         elif options.get('rebuild'):
             self.subcommand_rebuild(requested_indexes, no_input)
+        elif options.get('cleanup'):
+            self.subcommand_cleanup(requested_indexes, no_input)
 
     def subcommand_list(self):
         print("Available ES indexes:")
@@ -95,6 +104,22 @@ class Command(BaseCommand):
             sys.stdout.write("complete.\n")
             for alias, index in aliases:
                 print("'{0}' aliased to '{1}'".format(alias, index))
+
+    def subcommand_cleanup(self, indexes=None, no_input=False):
+        user_input = 'y' if no_input else ''
+        while user_input != 'y':
+            user_input = raw_input('Are you sure you want to clean up (ie DELETE) {0} index(es)? [y/N]: '.format('the ' + ', '.join(indexes) if indexes else '**ALL**')).lower()
+            if user_input == 'n':
+                break
+
+        if user_input == 'y':
+            sys.stdout.write("Deleting ES indexes: ")
+            indices = delete_indices(indices=indexes)
+            sys.stdout.write("complete.\n")
+            for index in indices:
+                print("'{0}' index deleted".format(index))
+            else:
+                print("{0} removed.".format(len(indices)))
 
     def subcommand_rebuild(self, indexes, no_input=False):
         if getattr(settings, 'DEBUG', False):

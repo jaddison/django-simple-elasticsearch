@@ -169,11 +169,29 @@ def rebuild_indices(es=None, indices=[], set_aliases=True):
 
     if set_aliases:
         create_aliases(es, aliases)
+        if es_settings.ELASTICSEARCH_DELETE_OLD_INDEXES:
+            delete_indices(es, [a for a, i in aliases])
 
     # `aliases` is a list of (index alias, index timestamped-name) tuples
     post_indices_rebuild.send(None, indices=aliases, aliases_set=set_aliases)
 
     return created_indices, aliases
+
+
+def delete_indices(es=None, indices=[], only_unaliased=True):
+    es = es or Elasticsearch(**es_settings.ELASTICSEARCH_CONNECTION_PARAMS)
+    indices = indices or get_indices(indices=[]).keys()
+    indices_to_remove = []
+    for index, aliases in es.indices.get_aliases().items():
+        # Make sure it isn't currently aliased, which would mean it's active (UNLESS
+        # we want to force-delete all `simple_elasticsearch`-managed indices).
+        #   AND
+        # Make sure it isn't an arbitrary non-`simple_elasticsearch` managed index.
+        if (not only_unaliased or not aliases.get('aliases')) and index.split('-', 1)[0] in indices:
+            indices_to_remove.append(index)
+
+    # es.indices.delete(','.join(indices_to_remove))
+    return indices_to_remove
 
 
 def recursive_dict_update(d, u):

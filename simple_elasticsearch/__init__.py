@@ -2,4 +2,4 @@
 
 __author__ = 'James Addison'
 __email__ = 'code@scottisheyes.com'
-__version__ = '0.9.16'
+__version__ = '0.9.17'
