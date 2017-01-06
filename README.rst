@@ -62,6 +62,22 @@ Or::
 
     $ pip install django-simple-elasticsearch
 
+Configuring
+-----------
+
+Add the simple_elasticsearch application to your INSTALLED_APPS list::
+
+    INSTALLED_APPS = (
+        ...
+        'simple_elasticsearch',
+    )
+
+Add any models to `ELASTICSEARCH_TYPE_CLASSES` setting for indexing using **es_manage** management command::
+
+    ELASTICSEARCH_TYPE_CLASSES = [
+        'blog.models.BlogPost'
+    ]
+
 License
 -------
 
