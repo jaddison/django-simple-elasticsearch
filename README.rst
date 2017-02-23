@@ -20,9 +20,14 @@ Django models.
 Versions
 --------
 
-Branch :code:`master` is currently the future-facing codebase (version 2.x), which will receive new features. `Documentation <http://django-simple-elasticsearch.readthedocs.io/>`_
+Branch :code:`master` targets both Elasticsearch 2.x and 5.x and will receive new
+features. Both `elasticsearch-py` 2.x and 5.x Python modules are currently
+supported. `Documentation <http://django-simple-elasticsearch.readthedocs.io/>`_
 
-Branch :code:`1.x` is the maintenance branch for the legacy 0.9.x versioned releases. This branch is unlikely to receive new features, but will receive required fixes.  `Documentation <http://django-simple-elasticsearch.readthedocs.io/en/1.x/>`_
+Branch :code:`1.x` is the maintenance branch for the legacy 0.9.x versioned releases,
+which targeted Elasticsearch versions less than 2.0. This branch is unlikely to
+receive new features, but will receive required fixes.
+`Documentation <http://django-simple-elasticsearch.readthedocs.io/en/1.x/>`_
 
 **Using a version older than 0.9.0? Please be aware that as of v0.9.0, this package
 has changed in a backwards-incompatible manner. Version 0.5 is deprecated and no

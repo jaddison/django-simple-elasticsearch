@@ -13,7 +13,7 @@ readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
-    'elasticsearch>=2.0.0,<3.0.0',
+    'elasticsearch>=2.0.0',
 ]
 
 test_requirements = [

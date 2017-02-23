@@ -3,11 +3,15 @@
 History
 -------
 
-2.1.0 (2016-12-20)
+2.1.1 (2017-02-22)
+---------------------
+
+* Minor changes to enable support for elasticsearch-py 5.x.
+
+2.1.0 (2017-03-)
 ---------------------
 
 * Addressing a packaging problem which erroneously included pyc/__pycache__ files.
-
 
 2.0.0 (2016-12-20)
 ---------------------
