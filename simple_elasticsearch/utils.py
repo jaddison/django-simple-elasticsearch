@@ -46,7 +46,7 @@ def get_indices(indices=[]):
 def create_aliases(es=None, indices=[]):
     es = es or Elasticsearch(**es_settings.ELASTICSEARCH_CONNECTION_PARAMS)
 
-    current_aliases = es.indices.get_aliases()
+    current_aliases = es.indices.get_alias()
     aliases_for_removal = collections.defaultdict(lambda: [])
     for item, tmp in current_aliases.items():
         for iname in list(tmp.get('aliases', {}).keys()):
@@ -180,7 +180,7 @@ def delete_indices(es=None, indices=[], only_unaliased=True):
     es = es or Elasticsearch(**es_settings.ELASTICSEARCH_CONNECTION_PARAMS)
     indices = indices or get_indices(indices=[]).keys()
     indices_to_remove = []
-    for index, aliases in es.indices.get_aliases().items():
+    for index, aliases in es.indices.get_alias().items():
         # Make sure it isn't currently aliased, which would mean it's active (UNLESS
         # we want to force-delete all `simple_elasticsearch`-managed indices).
         #   AND
