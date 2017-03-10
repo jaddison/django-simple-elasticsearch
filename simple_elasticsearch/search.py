@@ -101,6 +101,7 @@ class SimpleSearch(object):
         responses = []
 
         if self.bulk_search_data:
+            # TODO: ES 5.x adds `max_concurrent_searches` as an option to `msearch()`
             data = self.es.msearch(self.bulk_search_data)
             for i, tmp in enumerate((data or {}).get('responses', [])):
                 responses.append(Response(tmp, *self.page_ranges[i]))
