@@ -3,6 +3,12 @@
 History
 -------
 
+2.1.0 (2016-12-20)
+---------------------
+
+* Addressing a packaging problem which erroneously included pyc/__pycache__ files.
+
+
 2.0.0 (2016-12-20)
 ---------------------
 
