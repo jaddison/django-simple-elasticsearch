@@ -3,7 +3,7 @@
 History
 -------
 
-2.1.1 (2017-03-11)
+2.1.3 (2017-03-11)
 ---------------------
 
 * Minor changes to enable support for elasticsearch-py 5.x.
