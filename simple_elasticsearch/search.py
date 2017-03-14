@@ -1,3 +1,10 @@
+import warnings
+
+try:
+    from collections.abc import MutableMapping
+except:
+    from collections import MutableMapping
+
 from django.core.paginator import Paginator as DjangoPaginator
 from django.utils.functional import cached_property
 from elasticsearch import Elasticsearch
@@ -60,10 +67,31 @@ class Response(object):
         return paginator.page(self._page_num)
 
 
-class Result(object):
+class Result(MutableMapping, object):
     def __init__(self, data):
         self.result_meta = data
-        self.data = self.result_meta.pop('_source', {})
+        self.__dict__ = self.result_meta.pop('_source', {})
+
+    def __getattribute__(self, item):
+        if item == 'data':
+            warnings.warn("The `data` dict attribute will be removed in future versions. `Result` objects now function as `dicts` themselves (via __dict__ & MutableMapping).", DeprecationWarning)
+            return self.__dict__
+        return super(Result, self).__getattribute__(item)
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+
+    def __getitem__(self, key):
+        return self.__dict__[key]
+
+    def __delitem__(self, key):
+        del self.__dict__[key]
+
+    def __iter__(self):
+        return iter(self.__dict__)
+
+    def __len__(self):
+        return len(self.__dict__)
 
 
 class SimpleSearch(object):

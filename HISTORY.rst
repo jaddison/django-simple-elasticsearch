@@ -3,6 +3,11 @@
 History
 -------
 
+2.1.4 (2017-03-12)
+---------------------
+
+* Result class is now MutableMapping based, giving it the properties of a `dict`. Its `data` attribute is deprecated.
+
 2.1.3 (2017-03-11)
 ---------------------
 
