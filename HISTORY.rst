@@ -3,6 +3,14 @@
 History
 -------
 
+2.1.5 (2017-03-20)
+---------------------
+
+* Response class is now MutableSequence based, giving it the properties of a `list`. Its `results` attribute is deprecated, as you can now iterate over the results with the response instance itself.
+* Result class `results_meta` is deprecated. Use `meta` instead.
+* `get_from_es_or_None` now returns a `Result` object instead of the raw Elasticsearch result, for consistency.
+* `get_from_es_or_None` now catches only the Elasticsearch `NotFoundError` exception; previously it caught the more expansive `ElasticsearchException`, which could hide unrelated errors/issues.
+
 2.1.4 (2017-03-12)
 ---------------------
 

@@ -1,9 +1,9 @@
 import warnings
 
 try:
-    from collections.abc import MutableMapping
+    from collections.abc import MutableMapping, MutableSequence
 except:
-    from collections import MutableMapping
+    from collections import MutableMapping, MutableSequence
 
 from django.core.paginator import Paginator as DjangoPaginator
 from django.utils.functional import cached_property
@@ -14,11 +14,11 @@ from . import settings as es_settings
 
 class Paginator(DjangoPaginator):
     def __init__(self, response, *args, **kwargs):
-        # `response.results` is a generator, however `Paginator` was changed in 1.10
+        # `response` is a generator (MutableSequence), however `Paginator` was changed in 1.10
         # to require an object with either a `.count()` method (ie. QuerySet) or able
         # to call `len()` on the object - forcing the generator to resolve to a list
         # for this reason.
-        super(Paginator, self).__init__(list(response.results), *args, **kwargs)
+        super(Paginator, self).__init__(list(response), *args, **kwargs)
 
         # Override to set the count/total number of items; Elasticsearch provides the total
         # as a part of the query results, so we can minimize hits.
@@ -35,27 +35,31 @@ class Paginator(DjangoPaginator):
         return self._count
 
 
-class Response(object):
+class Response(MutableSequence, object):
     def __init__(self, d, page_num, page_size):
+        super(Response, self).__init__()
         self._page_num = page_num
         self._page_size = page_size
 
-        self.response_meta = d
         self.results_meta = d.pop('hits', {})
-        self._results = self.results_meta.pop('hits', [])
-        self.aggregations = self.response_meta.pop('aggregations', {})
+        self.__results = self.results_meta.pop('hits', [])
 
-    def __len__(self):
-        return len(self._results)
+        self.aggregations = d.pop('aggregations', {})
+        self.response_meta = d
+
+    def __getattribute__(self, item):
+        if item == 'results':
+            warnings.warn(
+                "The `results` attribute will be removed in future versions. "
+                "`Response` objects now function as `iterables` over the "
+                "result set themselves (via MutableSequence).",
+                DeprecationWarning)
+            return iter(self)
+        return super(Response, self).__getattribute__(item)
 
     @property
     def total(self):
         return self.results_meta.get('total', 0)
-
-    @property
-    def results(self):
-        for item in self._results:
-            yield Result(item)
 
     @property
     def max_score(self):
@@ -66,32 +70,62 @@ class Response(object):
         paginator = Paginator(self, self._page_size)
         return paginator.page(self._page_num)
 
+    def __len__(self):
+        return len(self.__results)
+
+    def __getitem__(self, index):
+        return Result(self.__results[index])
+
+    def __setitem__(self, index, value):
+        raise KeyError("Modifying results is not permitted.")
+
+    def __delitem__(self, index):
+        raise KeyError("Deleting results is not permitted.")
+
+    def __iter__(self):
+        for item in self.__results:
+            yield Result(item)
+
+    def insert(self, index, value):
+        raise KeyError("Modifying results is not permitted.")
+
 
 class Result(MutableMapping, object):
     def __init__(self, data):
-        self.result_meta = data
-        self.__dict__ = self.result_meta.pop('_source', {})
+        super(Result, self).__init__()
+        self.__rdata = data.pop('_source', {})
+        self.meta = data
 
     def __getattribute__(self, item):
         if item == 'data':
-            warnings.warn("The `data` dict attribute will be removed in future versions. `Result` objects now function as `dicts` themselves (via __dict__ & MutableMapping).", DeprecationWarning)
-            return self.__dict__
+            warnings.warn(
+                "The `data` dict attribute will be removed in future "
+                "versions. `Result` objects now function as `dicts` "
+                "themselves (via __dict__ & MutableMapping).",
+                DeprecationWarning)
+            return self.__rdata
+        elif item == 'result_meta':
+            warnings.warn(
+                "The `result_meta` attribute will be removed in future "
+                "versions. It can now be referenced as `meta`.",
+                DeprecationWarning)
+            return self.meta
         return super(Result, self).__getattribute__(item)
 
     def __setitem__(self, key, value):
-        self.__dict__[key] = value
+        raise KeyError("Modifying results is not permitted.")
 
     def __getitem__(self, key):
-        return self.__dict__[key]
+        return self.__rdata[key]
 
     def __delitem__(self, key):
-        del self.__dict__[key]
+        raise KeyError("Modifying results is not permitted.")
 
     def __iter__(self):
-        return iter(self.__dict__)
+        return iter(self.__rdata)
 
     def __len__(self):
-        return len(self.__dict__)
+        return len(self.__rdata)
 
 
 class SimpleSearch(object):

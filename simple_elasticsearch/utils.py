@@ -4,8 +4,9 @@ import gc
 import sys
 from django.conf import settings
 from django.http import Http404
-from elasticsearch import Elasticsearch, ElasticsearchException
+from elasticsearch import Elasticsearch, NotFoundError
 
+from simple_elasticsearch.search import Result
 from . import settings as es_settings
 from .signals import post_indices_create, post_indices_rebuild
 
@@ -221,8 +222,8 @@ def queryset_iterator(queryset, chunksize=1000):
 def get_from_es_or_None(index, type, id, **kwargs):
     es = kwargs.pop('es', Elasticsearch(es_settings.ELASTICSEARCH_SERVER))
     try:
-        return es.get(index, id, type, **kwargs)
-    except ElasticsearchException:
+        return Result(es.get(index, id, type, **kwargs))
+    except NotFoundError:
         return None
 
 
