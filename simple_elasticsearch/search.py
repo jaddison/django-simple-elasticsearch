@@ -47,15 +47,13 @@ class Response(MutableSequence, object):
         self.aggregations = d.pop('aggregations', {})
         self.response_meta = d
 
-    def __getattribute__(self, item):
-        if item == 'results':
-            warnings.warn(
-                "The `results` attribute will be removed in future versions. "
-                "`Response` objects now function as `iterables` over the "
-                "result set themselves (via MutableSequence).",
-                DeprecationWarning)
-            return iter(self)
-        return super(Response, self).__getattribute__(item)
+    @property
+    def results_raw(self):
+        return self.__results
+
+    @property
+    def results(self):
+        return iter(self)
 
     @property
     def total(self):
@@ -97,20 +95,17 @@ class Result(MutableMapping, object):
         self.meta = data
 
     def __getattribute__(self, item):
-        if item == 'data':
-            warnings.warn(
-                "The `data` dict attribute will be removed in future "
-                "versions. `Result` objects now function as `dicts` "
-                "themselves (via __dict__ & MutableMapping).",
-                DeprecationWarning)
-            return self.__rdata
-        elif item == 'result_meta':
+        if item == 'result_meta':
             warnings.warn(
                 "The `result_meta` attribute will be removed in future "
                 "versions. It can now be referenced as `meta`.",
                 DeprecationWarning)
             return self.meta
         return super(Result, self).__getattribute__(item)
+
+    @property
+    def data(self):
+        return self.__rdata
 
     def __setitem__(self, key, value):
         raise KeyError("Modifying results is not permitted.")

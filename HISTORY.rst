@@ -3,6 +3,11 @@
 History
 -------
 
+2.1.6 (2017-03-20)
+---------------------
+
+* Allowing direct access (again) to underlying dict/list in `Result` and `Response` classes for serialization and other purposes.
+
 2.1.5 (2017-03-20)
 ---------------------
 
