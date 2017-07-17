@@ -6,7 +6,6 @@ from .utils import queryset_iterator
 
 
 class ElasticsearchTypeMixin(object):
-
     @classmethod
     def get_es(cls):
         if not hasattr(cls, '_es'):
@@ -52,6 +51,10 @@ class ElasticsearchTypeMixin(object):
         return 100
 
     @classmethod
+    def get_bulk_ordering(cls):
+        return 'pk'
+
+    @classmethod
     def get_query_limit(cls):
         return 100
 
@@ -71,7 +74,7 @@ class ElasticsearchTypeMixin(object):
         bulk_limit = cls.get_bulk_index_limit()
 
         # this requires that `get_queryset` is implemented
-        for i, obj in enumerate(queryset_iterator(queryset, cls.get_query_limit())):
+        for i, obj in enumerate(queryset_iterator(queryset, cls.get_query_limit(), cls.get_bulk_ordering())):
             delete = not cls.should_index(obj)
 
             doc = {}

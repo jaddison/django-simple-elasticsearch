@@ -204,18 +204,19 @@ def recursive_dict_update(d, u):
     return d
 
 
-def queryset_iterator(queryset, chunksize=1000):
-    try:
-        last_pk = queryset.order_by('-pk')[0].pk
-    except IndexError:
-        return
+def queryset_iterator(queryset, chunksize=1000, order_by='pk'):
+    if order_by:
+        queryset = queryset.order_by(order_by)
 
-    queryset = queryset.order_by('pk')
-    pk = queryset[0].pk - 1
-    while pk < last_pk:
-        for row in queryset.filter(pk__gt=pk)[:chunksize]:
-            pk = row.pk
+    chunk = 0
+    while True:
+        n = 0
+        for n, row in enumerate(queryset[chunk * chunksize:(chunk + 1) * chunksize]):
             yield row
+
+        if not n:
+            break
+        chunk += 1
         gc.collect()
 
 
