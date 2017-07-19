@@ -17,6 +17,11 @@ if getattr(settings, 'IS_TEST', False):
         title = models.CharField(max_length=50)
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)
+        bulk_ordering = 'pk'
+
+        @classmethod
+        def get_bulk_ordering(cls):
+            return cls.bulk_ordering
 
         @classmethod
         def get_bulk_index_limit(cls):

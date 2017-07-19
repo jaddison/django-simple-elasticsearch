@@ -308,7 +308,7 @@ class ElasticsearchTypeMixinTestCase(TestCase):
     def test__bulk_index_queryset(self, mock_queryset_iterator):
         queryset = BlogPost.get_queryset().exclude(slug='DO-NOT-INDEX')
         BlogPost.bulk_index(queryset=queryset)
-        mock_queryset_iterator.assert_called_with(queryset, BlogPost.get_query_limit())
+        mock_queryset_iterator.assert_called_with(queryset, BlogPost.get_query_limit(), 'pk')
 
         mock_queryset_iterator.reset_mock()
 
@@ -316,6 +316,15 @@ class ElasticsearchTypeMixinTestCase(TestCase):
         BlogPost.bulk_index()
         # to compare QuerySets, they must first be converted to lists.
         self.assertEqual(list(mock_queryset_iterator.call_args[0][0]), list(queryset))
+
+        mock_queryset_iterator.reset_mock()
+
+        # hack in a test for ensuring the proper bulk ordering is used
+        BlogPost.bulk_ordering = 'created_at'
+        BlogPost.bulk_index(queryset=queryset)
+        mock_queryset_iterator.assert_called_with(queryset, BlogPost.get_query_limit(), 'created_at')
+        BlogPost.bulk_ordering = 'pk'
+
 
     @mock.patch('simple_elasticsearch.models.BlogPost.get_document')
     @mock.patch('simple_elasticsearch.models.BlogPost.should_index')

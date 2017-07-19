@@ -6,6 +6,7 @@ python:
   - "3.3"
   - "3.4"
   - "3.5"
+  - "3.6"
 install:
   # needed for python 3.2 tests - virtualenv>=14.0.0 dropped python 3.2 support
   # coverage>=4.0 doesn't support python 3.2 properly either

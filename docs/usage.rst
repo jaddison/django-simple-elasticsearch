@@ -132,6 +132,23 @@ save or delete - for this, you can use the :code:`ElasticsearchTypeMixin` built-
 
 Awesome - Django's magic is applied.
 
+Notes
+=====
+
+* Prior to version 2.2.0 of this package, only models with numerical primary keys could be indexed properly due to the
+  way the :code:`queryset_iterator()` utility function was implemented. This has been changed and the primary key no longer
+  matters.
+
+  Ordering the bulk queryset is important due to the fact that records may have been added during the indexing process
+  (indexing data can take a long time); if the results are ordered properly, the indexing process will catch the most
+  recent records. For most cases, the default bulk ordering of :code:`pk` will suffice (Django's default primary key field is
+  an auto-incrementing integer).
+
+  If a model has PK using a :code:`UUIDField` however, things change: UUIDs are randomly generated, so ordering by a
+  :code:`UUIDField` PK will most likely result in newly created items being missed in the indexin process. Overriding the
+  :code:`ElasticsearchTypeMixin` class method :code:`get_bulk_ordering()` addresses this issue - set it to order by a
+  :code:`DateTimeField` on the model.
+
 TODO:
 
 * add examples for more complex data situations

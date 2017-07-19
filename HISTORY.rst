@@ -3,6 +3,11 @@
 History
 -------
 
+2.2.0 (2017-07-17)
+---------------------
+
+* Addressing inability to index models with a non-integer PK field (ie. `UUIDField`) - added ability to order bulk queryset on an arbitrary model field.
+
 2.1.7 (2017-03-21)
 ---------------------
 
