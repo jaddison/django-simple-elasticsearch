@@ -5,7 +5,7 @@ Django Simple Elasticsearch
 .. image:: https://badge.fury.io/py/django-simple-elasticsearch.png
   :target: http://badge.fury.io/py/django-simple-elasticsearch
 
-.. image:: https://travis-ci.org/jaddison/django-simple-elasticsearch.png?branch=1.x
+.. image:: https://travis-ci.org/jaddison/django-simple-elasticsearch.png
   :target: https://travis-ci.org/jaddison/django-simple-elasticsearch
 
 .. image:: https://coveralls.io/repos/jaddison/django-simple-elasticsearch/badge.png
