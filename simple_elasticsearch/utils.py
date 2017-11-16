@@ -223,7 +223,7 @@ def queryset_iterator(queryset, chunksize=1000, order_by='pk'):
 def get_from_es_or_None(index, type, id, **kwargs):
     es = kwargs.pop('es', Elasticsearch(es_settings.ELASTICSEARCH_SERVER))
     try:
-        return Result(es.get(index, id, type, **kwargs))
+        return Result(es.get(index=index, doc_type=type, id=id, **kwargs))
     except NotFoundError:
         return None
 

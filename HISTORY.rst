@@ -3,6 +3,11 @@
 History
 -------
 
+2.2.1 (2017-11-15)
+---------------------
+
+* Fixing an issue with the recently released elasticsearch-py 6.0.0
+
 2.2.0 (2017-07-17)
 ---------------------
 
